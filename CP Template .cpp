@@ -1,7 +1,7 @@
 /*
 * Author : Ahmed Abdullah Shourav
 * Mail : ahmed15-898@diu.edu.bd
-* Mobile : 8801303206223
+* Phone : 8801303206223
 */
 
 
