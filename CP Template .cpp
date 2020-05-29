@@ -1,7 +1,12 @@
 /*
 * Author : Ahmed Abdullah Shourav
 * Mail : ahmed15-898@diu.edu.bd
-* Phone : 8801303206223
+* Mobile : 8801303206223
+*/
+
+/*
+* "A dream doesn't become reality through MAGIC. It takes Determination, Hard Work and Perseverance."
+* "Work untill you don't have to introduce yourself"
 */
 
 
@@ -2619,6 +2624,43 @@ while (!q.empty()) {
         }
     }
 }
+
+
+//********************* Topological sort / order ************************
+int n, m;
+int in[n]; MS0(in);
+vector<int> adj[n];
+
+for(int i = 0; i < m; i++) {
+    int x = II,y = II;
+    in[y]++;
+    adj[x].push_back(y);
+}
+
+queue<int> Q;
+for(int i = 0; i < n; i++) {    
+    if(in[i] == 0) Q.push(i);
+}
+
+int cnt = 0;
+while(Q.size()) {
+
+    int x = Q.front();
+    Q.pop();
+
+    cnt++;
+    for(auto y : adj[x]) {
+
+        in[y]--;
+        if(in[y] == 0) Q.push(y);
+    }   
+}
+
+if(cnt == n) printf("Topological order exist.\n");
+else printf("Doesn't exist.\n");
+
+//*********************  ************* ************************
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
