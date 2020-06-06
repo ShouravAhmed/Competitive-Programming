@@ -2659,7 +2659,39 @@ while(Q.size()) {
 if(cnt == n) printf("Topological order exist.\n");
 else printf("Doesn't exist.\n");
 
-//*********************  ************* ************************
+
+//****************** K'th Shortest Path ***********************
+
+vii adj[105];
+
+void dijkstra(int k, int s, int e) {
+    vi shortest_path[105];
+    vi used(105, 0);
+    set<pii > Q;
+
+    Q.insert({0,s});
+
+    while(Q.size()) {
+        int u = Q.begin()->ss, d = Q.begin()->ff;
+        Q.erase(Q.begin());
+
+        if(used[u] == k) continue;
+        used[u]++;
+        shortest_path[u].push_back(d);
+
+        for(auto x : adj[u]) {
+
+            int v = x.ss, w = x.ff;
+            Q.insert({d+w, v});
+        }
+    }
+
+    for(int i = 0; i < shortest_path[e].size(); i++) {
+        cout << i+1 << "'th Shortest path : " << shortest_path[e][i] << "\n";    
+    }
+}
+
+//****************************************  ************* ************************
 
 
 
