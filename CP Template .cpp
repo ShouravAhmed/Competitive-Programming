@@ -91,6 +91,7 @@ using namespace std;
 #define INF                 1llu<<61    // 2,305,843,009,213,693,952
 #define inf                 1<<29       // 536,870,912
 #define PI                  acos(-1.0)  // 3.1415926535897932
+#define PI                  3.14159265358979323846264338327950L
 
 //Float value compareson
 #define FasI(f)  (*((int *) &(f)))
@@ -107,8 +108,8 @@ int dr[]={-1,-1,-1,0,1,1, 1, 0};
 int dc[]={-1, 0, 1,1,1,0,-1,-1};
 //**************************
 //**** knight move ********
-int dr[]={};
-int dc[]={};
+int dr[] = { 1, 2, 2, 1, -1, -2, -2, -1 };
+int dc[] = { 2, 1, -1, -2, -2, -1, 1, 2 };
 //**************************
 
 //********** day of months *******************
@@ -201,7 +202,8 @@ logu(x) = (logk(x))/logk(u);
 
 //********************** Geometric Progration *******************
 if ratio between any consecutive number is constent its a geometric prograssion.
-ak + ax^2 + ax^3 + b = (bx-a)/(x-1)//a is first and b is last number and x is ratio.
+ax + ax^2 + ax^3 + b = (bx-a)/(x-1) 
+    //a is first and b is last number and x is ratio.
 
 //********************** Arithmatic Progration *******************
 is difference between any consecutive number is constent its a arithmatic prograssion.
@@ -557,16 +559,22 @@ void half_mem_bitSieve(int n){
 
 //***** sigmented seive : its generate all prime between 2 given number *****
 
-void sigprime(ll l,ll r){
-    bool mark[r-l+1];
-    for(int i=0;i<=r-l;i++)mark[i]=1;
-    for(int i=0;prime[i]*(ll)prime[i]<=r;i++){
-        ll base=(l/prime[i])*prime[i];
-        if(base<l)base+=prime[i];
-        for(ll j=base;j<=r;j+=prime[i])mark[j-l]=0;
-        if(base==prime[i])mark[base-l]=1;
+void segmented_sieve(ll lo, ll hi) {
+    bool mark[hi-lo+5]; MS0(mark);
+
+    for(int i = 0; (ll)prime[i] * prime[i] <= hi; i++) {
+
+        long start = ceil(lo / (prime[i] * 1.0)) * prime[i];
+        if(prime[i] == start) start += prime[i];
+
+        for(long j = start; j <= hi; j += prime[i]) {
+            mark[j-lo] = 1;
+        }
     }
-    for(int i=0;i<=(r-l);i++)if(mark[i])printf("%lld\n",i+l);
+
+    for(long i = max(lo,(ll)2); i <= hi; i++) {
+        if(!mark[i-lo]) printf("%lld\n", i);
+    }
 }
 
 //********************* Optimized Linear Sieve *************************
@@ -588,7 +596,7 @@ void linear_sieve(int n){
 
 
 //******************* Factorial Modulas *************************
-int factmod(int n, int p) {
+int factmod(int n, int p) { //O(plog(n))
     int res = 1;
     while (n > 1) {
         res = (res * ((n/p) % 2 ?  p-1 : 1)) % p;
@@ -1207,6 +1215,7 @@ void n_equal__a_cube__minus__b_cube(ll n){
 nCr = n! / ((n-r)! * r!);
 nCr = (n-1)C(r-1) + (n-1)Cr;
 
+//------------------------------------------
 
 map<pair<int,int>,ll> mp; 
 ll ncr(int n,int r){
@@ -1223,9 +1232,11 @@ ll ncr(int n,int r){
     return a+b;
 }
 
+//--------- Ncr using DP -------------------
 
 ll ar[10000][10000];
 
+// recursive
 ll ncr(int n,int r){
     if(r==1)return n;
     if(n==r)return 1;
@@ -1246,8 +1257,9 @@ ll ncr(int n,int r){
     return ar[n][r]=a+b;
 }
 
+// iterative
 
-ll ncr_loop(int n,int r){
+ll ncr(int n,int r){
     for(int i=0;i<=n;i++){
         for(int j=0;j<=r;j++){
             if(j<=i){
@@ -1259,6 +1271,8 @@ ll ncr_loop(int n,int r){
     }
     return ar[n][r];
 }
+
+// ------ Naive ncr O(n) -------
 
 ll C(ll n, ll r){
     int a=(n-r);
@@ -1293,6 +1307,27 @@ ll C(ll n, ll r){
     }
     return ans;
 }
+
+// -------- NcR using modular inverse -------------
+
+ll fact[MAX+5];
+ll invfact[MAX+5];
+
+inline void precal_fact() {
+    fact[0] = 1;
+    for(ll i = 1; i <= MAX; i++) fact[i] = (fact[i-1] * i) % MOD;
+    invfact[MAX] = exp(fact[MAX], MOD-2);
+    for(int i = MAX-1; i >= 0; i--) invfact[i] = (invfact[i+1] * (i+1)) % MOD;
+}
+
+inline ll ncr(ll n, ll r) {
+    if(r > n) return 0;
+    ll ret = ((((fact[n] * invfact[n-r]) % MOD) * invfact[r]) % MOD);
+    return ret;
+}
+
+//---------------------------------------------------
+
 
 //***** Permutation ***************
 nPr = n! / (n - r)!;
@@ -1341,26 +1376,61 @@ then the n,th number is sum of ((n-1)th number and  ( (n-2)th number * 2));*/
 Jacobsthal_Number(n) = Jacobsthal_Number(n-1) + 2*Jacobsthal_Number(n-2);
 
 
-//********************** Derangement number ***********************
+
+//********************** Dearangement number ***********************
 /*
 Derangement number is there are how many way to permutation n objects 
 such that none of them take there real position.*/
-De(n) = (n-1)*De(n-2) + (n-1)*de(n-1);
+
+ll de[1005];
+ll dearange(ll n) {
+    if(de[n] != -1) return de[n];
+    return de[n] = multi((n-1), add(dearange(n-2), dearange(n-1)));
+}
+ 
 
 //******************** Catalan number ************************
 
-catalan(n) = combination(2*n , n) - combination(2*n , n+1); 
+//------------- 2d loop --------------
+ll cat[120002];
+MS0(cat);
+cat[0] = cat[1] = 1;
+
+for(int i = 2; i <= 10002; i++) {
+    for(int j = 1; j <= i; j++) {
+        cat[i] = add(cat[i], multi(cat[j-1], cat[i-j]));
+    }
+}
+
+//-------------- formula --------------
+
+ll cat(int n) {
+    return multi(ncr(n+n, n), exp(n+1, MOD-2));
+}
 
 
 //********************* Stirling numbers *******************
 
 //****** stirling number of 2nd kind ********
+# explaination:
+    "n" ta different object theke object nia 
+    "k" size er koto ti non empty different 
+    subset create kora jay?
+# sol:
 
-stirling number of 2nd kind is there are how many way to 
-divide n objects into k sigment.
+    int dp(int n, int k) {
+        // n'th ball can be alone in the box
+        int ret = dp(n-1, k-1);
+        // n'th ball not alone in the box
+        ret += dp(n-1, k) * k;
+        return ret;
+    }
+//----------------------------------------------
 
-str2(n,k) = str2(n-1,k-1) + k*str2(n-1,k);
-base case : str2(n,1)=str2(n,n)=1;
+
+
+
+
 
 //****** stirling number of 1st kind *********
 
@@ -1668,6 +1738,26 @@ void margesort(int lo,int hi){
     }
     for(int i=lo;i<=hi;i++)arr[i]=tmp[i];
 }
+
+//_______ Quick sort ________
+
+int ar[1000005];
+void quick_sort(int lo, int hi)  {
+    if(lo >= hi) return;
+ 
+    int i = lo, j = lo;
+    for(; j < hi; j++) {
+        if(ar[j] <= ar[hi]) {
+            swap(ar[i], ar[j]);
+            i++;
+        }
+    }
+    swap(ar[i], ar[hi]);
+ 
+    quick_sort(lo, i-1);
+    quick_sort(i+1, hi);
+}
+ 
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -2274,6 +2364,29 @@ int avg(int x, int y){
     return (x&y)+((x^y)>>1);
 }
 
+// Maximum xor of to number in a range 
+int max_xor_in_range(int l, int r) {
+    l = l ^ r; r = 1;   
+    
+    // after xor, left most on bit is the 
+    // bit where 0,1 occer in l and r, 
+    // after then we can make all bit 1.
+    
+    int cnt = 0;
+    while(l) {
+        cnt++;
+        l >>= 1;
+    }
+    int ret = 0;
+    while(cnt--){
+        ret += r; r <<= 1;
+    }
+    return ret;
+}
+
+// 
+
+
 //****************************************************************************************
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -2420,9 +2533,9 @@ mp["ab"]=10;
 
 set<int> a,b,un,in,di;
 
-set_union(a.begin(),a.end(),b.begin(),b.end(),insert_iterator<set<int> >(un,un.begin()));
-set_intersection(a.begin(),a.end(),b.begin(),b.end(),insert_iterator<set<int> >(in,in.begin()));
-set_difference(a.begin(),a.end(),b.begin(),b.end(),insert_iterator<set<int> >(di,di.begin()));
+set_union(all(a),all(b),insert_iterator<set<int> >(un,un.begin()));
+set_intersection(all(a),all(b),insert_iterator<set<int> >(in,in.begin()));
+set_difference(all(a),all(b),insert_iterator<set<int> >(di,di.begin()));
 
 //Conversions
 // - > vector to set
@@ -2499,20 +2612,40 @@ for_each(all(v), func);
 
 //**************************************************************************** 
 
+// function inside main function
+auto sum = [&](int x, int y) {
+    return x+y;
+};
+
+cout << sum(5, 15) << endl;
+//**************************************************************************** 
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 ************************************ SYSTEM ************************************************
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-//Run code from ubuntu terminal
+// ___ Run code from ubuntu terminal
 C++ 98 : g++ -o test test.cpp
 C++ 11 : g++ -std=c++11 -o test test.cpp
 C      : gcc -o test test.c
 Run code : ./test
 
-Python : python test.py
+// fast compile
+g++ -std=c++17 -Wshadow -Wall t1.cpp -o test -O2 -Wno-unused-result
+// compile with some debug hint
+g++ -std=c++17 -Wshadow -Wall t1.cpp -o test -g -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
+//_______________________________________________
 
+
+// py
+
+Python2 : python test.py
+Python3 : python3 test.py
+
+
+//jav
 java : javac test.java
        java class_name
 
@@ -2525,6 +2658,44 @@ diff file1.txt file2.txt
 ♡ ❤ 
 
 //********************************************************************************************
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+******************************************* GREEDY *******************************************
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// *******************************************************************************
+// fill a squre with 1 such that 
+// ((max(sum_of_row) - min(sum_of_row))^2 - (max(sum_of_col) - min(sum_of_col))^2)
+// is minimum...
+
+int p = 0, q = 0;
+while(k--) {
+    ar[p+1][q+1] = 1;
+    p++; q = (q + 1) % n;
+    if(p == n) {
+        p = 0;
+        q = (q + 1) % n;
+    }
+}
+
+// *******************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+//********************************************************************************************
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -2659,7 +2830,39 @@ while(Q.size()) {
 if(cnt == n) printf("Topological order exist.\n");
 else printf("Doesn't exist.\n");
 
-//*********************  ************* ************************
+
+//****************** K'th Shortest Path ***********************
+
+vii adj[105];
+
+void dijkstra(int k, int s, int e) {
+    vi shortest_path[105];
+    vi used(105, 0);
+    set<pii > Q;
+
+    Q.insert({0,s});
+
+    while(Q.size()) {
+        int u = Q.begin()->ss, d = Q.begin()->ff;
+        Q.erase(Q.begin());
+
+        if(used[u] == k) continue;
+        used[u]++;
+        shortest_path[u].push_back(d);
+
+        for(auto x : adj[u]) {
+
+            int v = x.ss, w = x.ff;
+            Q.insert({d+w, v});
+        }
+    }
+
+    for(int i = 0; i < shortest_path[e].size(); i++) {
+        cout << i+1 << "'th Shortest path : " << shortest_path[e][i] << "\n";    
+    }
+}
+
+//****************************************  ************* ************************
 
 
 
@@ -3691,11 +3894,268 @@ bool set_pertition(vi &v, int terget, int segment, int remain, int start, int ma
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-********************************************************************************************
+*************************** divide And conquer ************************************
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
+// _______ Karatsuba fast polynomial multiplication _____________
 
+void print_polynomeal(vi v) {
+ 
+    for(int i = 0, j = v.size()-1 ; i < v.size(); i++, j--) {
+ 
+        if(v[i]) {
+            if(v[i] > 1) cout << v[i];
+            else if(v[i] == 1 && j == 0) cout << "1";
+            if(j) {
+                if(j == 1) cout << "x";
+                else cout << "x^" << j;
+            }
+            if(i < v.size()-1) cout << " + ";
+        }
+        else{
+            cout << "0";
+            if(i < v.size()-1) cout << " + ";
+        }
+    }
+    cout << "\n";
+}
+ 
+ 
+vi multiply_polynomeal_nieve(vi x, vi y) {
+    vi ret((x.size()*2)-1);
+ 
+    for(int i = 0; i < x.size(); i++) {
+        for(int j = 0; j < y.size(); j++) {
+ 
+            ret[i+j] += (x[i] * y[j]);
+        }
+    }
+    return ret;
+}
+ 
+vi multiply_polynomeal_nieve_d_and_q(vi x, vi y) {
+    int n = x.size();
+    if(n == 1) {
+        vi ret(1);
+        ret[0] = x[0] * y[0];
+        return ret;
+    }
+ 
+    vi x1, x0, y1, y0;
+    for(int i = 0; i < n/2; i++) x1.push_back(x[i]);
+    for(int i = (n/2); i < n; i++) x0.push_back(x[i]);
+    for(int i = 0; i < n/2; i++) y1.push_back(y[i]);
+    for(int i = (n/2); i < n; i++) y0.push_back(y[i]);
+ 
+    if(x1.size() < y0.size()) x1.push_back(0);
+    if(y1.size() < x0.size()) y1.push_back(0);
+ 
+    vi x1y1 = multiply_polynomeal_nieve_d_and_q(x1, y1);
+    vi x0y0 = multiply_polynomeal_nieve_d_and_q(x0, y0);
+ 
+    vi x1y0 = multiply_polynomeal_nieve_d_and_q(x1, y0);
+    vi x0y1 = multiply_polynomeal_nieve_d_and_q(x0, y1);
+ 
+ 
+    vi ret(n*2-1);
+ 
+    for(int i = 0, j = 0; i <= n-2; i++, j++) ret[i] += x1y1[j];
+    for(int i = n/2, j = 0; i <= n+(n/2)-2; i++, j++) ret[i] += (x1y0[j] + x0y1[j]);
+    for(int i = (n*2-1)-x0y0.size(), j = 0; i <= n*2-2; i++, j++) ret[i] += x0y0[j];
+ 
+    return ret;
+}
+ 
+vi multiply_polynomeal_fast_d_and_q(vi x, vi y) {
+    int n = x.size();
+    if(n == 1) {
+        vi ret(1);
+        ret[0] = x[0] * y[0];
+        return ret;
+    }
+ 
+    vi x1, x0, y1, y0;
+    for(int i = 0; i < n/2; i++) x1.push_back(x[i]);
+    for(int i = (n/2); i < n; i++) x0.push_back(x[i]);
+    for(int i = 0; i < n/2; i++) y1.push_back(y[i]);
+    for(int i = (n/2); i < n; i++) y0.push_back(y[i]);
+ 
+    if(x1.size() < y0.size()) x1.push_back(0);
+    if(y1.size() < x0.size()) y1.push_back(0);
+ 
+    vi x1y1 = multiply_polynomeal_fast_d_and_q(x1, y1);
+    vi x0y0 = multiply_polynomeal_fast_d_and_q(x0, y0);
+ 
+    vi x1Px0(x1.size());
+    for(int i = 0; i < x1.size(); i++) {
+        x1Px0[i] = (x1[i] + x0[i]);
+    }
+    vi y1Py0(y1.size());
+    for(int i = 0; i < y1.size(); i++) {
+        y1Py0[i] = (y1[i] + y0[i]);
+    }
+ 
+    vi mid_item = multiply_polynomeal_fast_d_and_q(x1Px0, y1Py0);
+    for(int i = 0; i < x1y1.size(); i++) mid_item[i] -= (x1y1[i] + x0y0[i]);
+ 
+    vi ret(n*2-1);
+ 
+    for(int i = 0, j = 0; i <= n-2; i++, j++) ret[i] += x1y1[j];
+    for(int i = n/2, j = 0; i <= n+(n/2)-2; i++, j++) ret[i] += mid_item[j];
+    for(int i = (n*2-1)-x0y0.size(), j = 0; i <= n*2-2; i++, j++) ret[i] += x0y0[j];
+ 
+    return ret;
+}
+ 
+int main() {
+ 
+    cout << "\ninput coefficients of 2 polynomial of same degree and size:" << endl;
+    int a, b;
+    cin >> a;
+    vi x(a); vsc(x);
+    cin >> b;
+    vi y(b); vsc(y);
+ 
+ 
+ 
+    cout << endl;
+    cout << "our polynomials are :" << endl;
+    print_polynomeal(x);
+    print_polynomeal(y);
+    cout << endl;
+ 
+    cout << "nieve loop :" << endl;
+    vi pro = multiply_polynomeal_nieve(x, y);
+    print_polynomeal(pro);
+    cout << endl;
+ 
+    cout << "nieve divide and conqure :" << endl;
+    pro = multiply_polynomeal_nieve_d_and_q(x, y);
+    print_polynomeal(pro);
+    cout << endl;
+ 
+    cout << "fast divide and conqure :" << endl;
+    pro = multiply_polynomeal_fast_d_and_q(x, y);
+    print_polynomeal(pro);
+    cout << endl;
+ 
+    return 0;
+}
+
+
+
+//_________________ Closest point pair  ________________________
+// given a list of point find the two most closest point point
+
+struct pt{
+    double x = 0.0, y = 0.0;
+    int id=0;
+};
+
+
+int n;
+pt ls[100005], tmp[100005];
+
+double min_dist;
+pair<int, int> best_pair;
+
+
+void update_ans(const pt &a, const pt &b) {     
+    double dist = sqrt(((a.x - b.x)*(a.x - b.x)) + ((a.y - b.y)*(a.y - b.y)));
+   
+    if(dist < min_dist) {     
+        min_dist = dist;
+        best_pair = {a.id, b.id};
+    }
+}
+
+
+void sort_x(int lo, int hi) {
+
+    if(lo == hi) return;
+    int mid = (lo + hi) / 2;
+    
+    sort_x(lo, mid);
+    sort_x(mid + 1, hi);
+    
+    for(int i = lo, j = mid + 1, k = lo; k <= hi; k++) {
+        if(i == mid + 1) tmp[k] = ls[j++];
+        else if(j == hi + 1) tmp[k] = ls[i++];
+        else if(ls[i].x <= ls[j].x) tmp[k] = ls[i++];
+        else tmp[k] = ls[j++];
+    }
+    for(int i = lo; i <= hi; i++) ls[i] = tmp[i];
+}
+
+
+void solve(int lo, int hi) {
+    if(lo == hi) return;
+
+    int mid = (lo + hi) / 2;
+    int midx = ls[mid].x;
+
+    solve(lo, mid);
+    solve(mid+1, hi);
+
+    //--- margeing : left and right part sorted based on y-axis ---
+    for(int i = lo, j = mid + 1, k = lo; k <= hi; k++) {
+        if(i == mid + 1) tmp[k] = ls[j++];
+        else if(j == hi + 1) tmp[k] = ls[i++];
+        else if(ls[i].y <= ls[j].y) tmp[k] = ls[i++];
+        else tmp[k] = ls[j++];
+    }
+    for(int i = lo; i <= hi; i++) ls[i] = tmp[i];
+    //-------------------------------------------------------------
+
+
+    // --- taking the points have distence with midx --------------
+    // --- smaller then min_dist ----------------------------------
+    int xx = 0;
+    for(int i = lo; i <= hi; i++) {
+        if(abs(ls[i].x - midx) < min_dist) tmp[xx++] = ls[i];
+    }
+    for(int i = 0; i < xx; i++) {
+        for(int j = i+1; (j < xx) && (tmp[j].y - tmp[i].y < min_dist); j++) {
+            update_ans(tmp[i], tmp[j]);
+        }
+    }
+    //-------------------------------------------------------------
+}
+
+
+int main() {
+
+    cin >> n;
+    min_dist = 1e9;
+
+    for(int i = 0; i < n; i++) {
+
+        cin >> ls[i].x >> ls[i].y;
+
+        ls[i].x += eps;
+        ls[i].y += eps;
+        ls[i].id = i;
+    }
+
+    sort_x(0, n-1);
+    solve(0, n-1);
+
+
+    if(best_pair.ff > best_pair.ss) swap(best_pair.ff, best_pair.ss);
+
+    cout << best_pair.ff << " " << best_pair.ss << " " << fixed << setprecision(6) << min_dist << "\n";
+
+    return 0;
+}
+
+
+//_____________________________________________________________________________________________
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+*********************************************************************************************
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
