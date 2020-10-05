@@ -203,7 +203,7 @@ logu(x) = (logk(x))/logk(u);
 //********************** Geometric Progration *******************
 if ratio between any consecutive number is constent its a geometric prograssion.
 ax + ax^2 + ax^3 + b = (bx-a)/(x-1) 
-    //a is first and b is last number and x is ratio.
+//a is first and b is last number and x is ratio.
 
 //********************** Arithmatic Progration *******************
 is difference between any consecutive number is constent its a arithmatic prograssion.
@@ -226,6 +226,9 @@ sol: there is an element which can devide sum of
 all element (1-n) except that equally
 //*****************************************************************
 
+// express an integer as sum of consicutive positive numbers
+if a number is power of two then it can not be expressed 
+as sum of 2 or more consicutive positive integer.
 
 
 //************ Number of latis point between 2 point **************
@@ -778,8 +781,52 @@ vector<ll> devisor_of_18digit_number(ll n){//first generate 1e8 prime
     return dev;
 }
 
+// ************** highly composite number ******************
 
-//**** Divisors of n in sqrt(n) ************
+vector<int> prime = {2, 3, 5, 7, 11, 13, 17, 19, 23};
+int res_div, res_num, n;
+
+void highly_composite_number(int pos, long long num, int div) { 
+
+    if(div > res_div) {
+        res_div = div;
+        res_num = num;
+    }
+    else if(div == res_div && num < res_num) {
+        res_num = num;
+    }
+
+    if(pos == prime.size()) return;
+    long long val = prime[pos];
+
+    for(int i = 1; i <= 30; i++) {
+        if(num * val > n) break;
+    
+        highly_composite_number(pos+1, num * val, div * (i+1));
+        val *= prime[pos];
+    }
+}
+
+int main(){
+
+    cin >> n;
+    cout << "All highly composite number upto N :\n1\n";
+    vector<int> ans;
+
+    while(1) {
+        res_div = res_num = 0;
+        highly_composite_number(0, 1, 1);
+        ans.push_back(res_num);
+        n = res_num-1;   
+        if(n == 1) break;
+    }
+    for(int i = ans.size()-1; i >= 0; i--) cout << ans[i] << "\n";
+    
+    return 0;
+}
+
+
+//***************** Divisors of n in sqrt(n) ************************
 
 vector<int> divisor_in_sqrt(int n){
     vector<int> a,b;
@@ -1200,7 +1247,7 @@ void n_equal__a_cube__minus__b_cube(ll n){
     fflush(stdout);
 }
 
-//*************************************************************
+//**********************************************************
 
 
 
@@ -2311,7 +2358,367 @@ pos = 0;
 build(root, 0, b.size()-1);
 print_postorder(root);
 
-//****************************************************************
+
+
+//**************** min heap implementation ******************************
+class min_pq{
+
+private:
+    vector<int> _pq;
+    void heap_down(int now) {
+        while(1){
+            int check = now;
+            if(now*2 < _pq.size() && _pq[now*2] < _pq[check]) check = now*2;
+            if((now*2)+1 < _pq.size() && _pq[(now*2)+1] < _pq[check]) check = (now*2)+1;
+            if(check == now) break;
+            swap(_pq[now], _pq[check]);
+            now = check;
+        }
+    }
+    void heap_up(int now) {
+        while(now != 1 && _pq[now/2] > _pq[now]) {
+            swap(_pq[now/2], _pq[now]);
+            now /= 2;
+        }
+    }
+
+public:
+    min_pq() {
+        _pq = {0};
+    }
+    min_pq(vector<int> _in) {
+        _pq = {0};
+        for(auto i : _in) _pq.push_back(i);
+        for(int i = _pq.size()/2; i >= 1; i--) heap_down(i);
+    }
+    
+    void push(int val) {
+        _pq.push_back(val);
+        heap_up(_pq.size()-1);
+    }
+
+    int top() {
+        if(_pq.size() == 1) return -1;
+        return _pq[1];
+    }
+
+    int pop() {
+        if(_pq.size() == 1) return -1;
+        int ret = _pq[1];
+        swap(_pq[1], _pq.back());
+        _pq.pop_back();
+        heap_down(1);
+        return ret;
+    }
+
+    int size() {
+        return _pq.size()-1;
+    }
+};
+
+int main() {
+
+    vector<int> v = {5,4,3,2,1,9,8,7,6};
+    min_pq pq = min_pq(v);
+
+    while(pq.size()) cout << pq.pop() << " ";
+    cout << endl;
+
+    pq.push(12323);
+    pq.push(45);
+    pq.push(46);
+    cout << "size = " << pq.size() << endl;
+    cout << pq.pop() << endl;
+    cout << pq.pop() << endl;
+    cout << pq.top() << endl;
+}
+
+// ************************* Sqrt decomposition *********************************
+
+// range sum qeary - without lazy
+int bucket_size;
+vi ar, bucket;
+
+void create(int n) {
+    bucket_size = sqrt(n)+1;
+    bucket = vi(bucket_size);
+    ar = vi(n);
+    for(int i = 0; i < n; i++) {
+        ar[i] = II;
+    }
+}
+
+int bucket_no(int x) {
+    return (x / bucket_size);
+}
+
+int range_left(int x) {
+    return (((x+bucket_size)/bucket_size) * bucket_size);
+}
+
+int range_right(int x) {
+    return ((((x-bucket_size)/bucket_size) * bucket_size) + bucket_size - 1);
+}
+
+void build(int n) {
+    for(int i = 0; i < n; i++) {
+        bucket[bucket_no(i)] += ar[i];
+    }
+}
+
+void process_queary(int q) {
+    while(q--) {
+        int x = II, y;
+        if(x == 1) {
+            x = II;
+            bucket[bucket_no(x)] -= ar[x];
+            printf("%d\n", ar[x]);
+            ar[x] = 0;
+        }
+        else if(x == 2) {
+            x = II; y = II;
+            bucket[bucket_no(x)] += y;
+            ar[x] += y;
+        }
+        else {
+            x = II; y = II;
+            int sum = 0;
+
+            int lo = range_left(x), hi = range_right(y);
+            
+            if(bucket_no(lo) > bucket_no(hi)) {
+                for(int i = x; i <= y; i++) sum += ar[i];
+            }
+            else{
+                for(int i = x; i < lo; i++) sum += ar[i];
+                for(int i = hi+1; i <= y; i++) sum += ar[i];
+
+                int l = bucket_no(lo), r = bucket_no(hi);
+                while(l <= r) {
+                    sum += bucket[l];
+                    l++;
+                }
+            }
+    
+            printf("%d\n", sum);
+        }
+    }
+}
+
+int main() {
+
+    TEST_CASE {
+        int n = II, q = II;
+        
+        create(n);
+        build(n);
+
+        PRINT_CASEN;
+        process_queary(q);
+    }
+
+    return 0;
+}
+
+// range sum query - with lazy update
+
+int bucket_size;
+struct bucket_data{
+    ll val, lazy;
+    bucket_data() {
+        val = lazy = 0;
+    }
+};
+vl ar;
+vector<bucket_data> bucket;
+
+void create(int n) {
+    bucket_size = sqrt(n)+1;
+    bucket = vector<bucket_data>(bucket_size);
+    ar = vl(n);
+}
+
+int bucket_no(int x) {
+    return (x / bucket_size);
+}
+
+int range_left(int x) {
+    return (((x+bucket_size)/bucket_size) * bucket_size);
+}
+
+int range_right(int x) {
+    return ((((x-bucket_size)/bucket_size) * bucket_size) + bucket_size - 1);
+}
+
+void propagate(int x) {
+    int l = (x * bucket_size), r = (x * bucket_size) + bucket_size - 1;
+    bucket[x].val = 0;
+    for(int i = l; i <= r; i++) {
+        ar[i] += bucket[x].lazy;
+        bucket[x].val += ar[i];
+    }
+    bucket[x].lazy = 0;
+}
+
+void update(int a, int b, int x) {
+    int lo = range_left(a), hi = range_right(b);
+    int l = bucket_no(lo), r = bucket_no(hi);
+
+    propagate(bucket_no(a));
+    propagate(bucket_no(b));
+
+    if(lo > hi) {        
+        for(int i = a; i <= b; i++) {
+            ar[i] += x;
+            bucket[bucket_no(i)].val += x;
+        }
+    }
+    else{
+        for(int i = a; i < lo; i++) {
+            ar[i] += x;
+            bucket[bucket_no(i)].val += x;
+        }
+        for(int i = hi + 1; i <= b; i++)  {
+            ar[i] += x;
+            bucket[bucket_no(i)].val += x;
+        }
+        for(int i = l; i <= r; i++) {
+            bucket[i].lazy += x;
+            bucket[i].val += (x * bucket_size);
+        }
+    }
+}
+
+void solve(int a, int b) {
+    int lo = range_left(a), hi = range_right(b);
+    int l = bucket_no(lo), r = bucket_no(hi);
+
+    propagate(bucket_no(a));
+    propagate(bucket_no(b));
+
+    ll sum = 0;
+    if(lo > hi) {
+        for(int i = a; i <= b; i++) sum += ar[i];
+    }
+    else{
+        for(int i = a; i < lo; i++) sum += ar[i];
+        for(int i = hi+1; i <= b; i++) sum += ar[i];
+        for(int i = l; i <= r; i++) sum += bucket[i].val;
+    }
+    printf("%lld\n", sum);
+}
+
+void process_query(int q) {
+    while(q--) {
+        int x = II, a, b;
+        if(x == 0) {
+            a = II; b = II; x = II; 
+            update(a, b, x);
+        }
+        else {
+            a = II; b = II;
+            solve(a, b);
+        }
+    }
+}
+
+int main() {
+
+    TEST_CASE{
+        int n = II, q = II;
+        create(n);
+
+        PRINT_CASEN;
+        process_query(q);
+    }
+
+    return 0;
+}
+
+// total qunique integer in a range l - r
+// mo's algo
+
+int bucket_size;
+struct bucket_data{
+    int l, r, l_buc, idx;
+    bucket_data(int _l, int _r, int _idx) {
+        l = _l; r = _r; 
+        l_buc = l / bucket_size;
+        idx = _idx;
+    }
+};
+vi ar;
+
+bool cmp(bucket_data x, bucket_data y) {
+    if(x.l_buc == y.l_buc) {
+        if(x.l_buc & 1) return (x.r > y.r);
+        else return (x.r < y.r);
+    }
+    return (x.l_buc < y.l_buc);
+}
+
+int lo, hi, ans;
+vi frq(1000005);
+
+inline void add(int x) {
+    frq[x]++;
+    if(frq[x] == 1) ans++;
+}
+
+inline void remove(int x) {
+    frq[x]--;
+    if(frq[x] == 0) ans--;
+}
+
+inline int solve(int l, int r) {
+    while(lo < l) {
+        remove(ar[lo]); lo++;
+    }
+    while(lo > l) {
+        lo--; add(ar[lo]);
+    }
+    while(hi < r) {
+        hi++; add(ar[hi]);
+    }
+    while(hi > r) {
+        remove(ar[hi]); hi--;
+    }
+    return ans;
+}
+
+
+int main() {
+
+    int n = II;
+    bucket_size = sqrt(n) + 1;
+
+    ar = vi(n);
+    vsc(ar, n);
+
+    int q = II;
+    vector<bucket_data> qry;
+
+    for(int i = 0; i < q; i++) {
+        int l = II, r = II;
+        qry.push_back(bucket_data(l-1, r-1, i));
+    }
+    sort(all(qry), cmp);
+
+    lo = hi = 0;
+    frq[ar[0]]++;
+    ans = 1;
+
+    vi ans(q);
+    for(int i = 0; i < q; i++) {
+        ans[qry[i].idx] = solve(qry[i].l, qry[i].r);
+    }
+    for(int i = 0; i < q; i++) printf("%d\n", ans[i]);
+
+    return 0;
+}
+
+
+// *******************************************************************************************
 
 
 
@@ -2394,7 +2801,7 @@ int max_xor_in_range(int l, int r) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 //fast read int
-void read(int &x){
+void read(int &x) {
     x = 0; char c = getchar();
     while(c>='0' && c<='9')
         x = (x<<3) + (x<<1) + (c-'0'), c = getchar();
@@ -3631,16 +4038,109 @@ int main(){
     return 0;
 }
 
+// ************* O(n^2) LIS and path printgin *********
+
+int n = II;
+vi dp(n,1), path(n,-1), v(n);
+
+for(int i = 0; i < n; i++) {
+    v[i] = II;
+
+    for(int j = 0; j < i; j++) {
+
+        if(v[i] >= v[j]) {
+            if(dp[j]+1 > dp[i]) {
+
+                dp[i] = dp[j] + 1;
+                path[i] = j;
+            }
+        }
+    }
+}
+
+int ans = max_ele(dp);
+cout << "\nLength of LIS is : " << ans  << "\n";
+
+vi path_sol;
+cout << "\nLIS is :\n";
+
+for(int i = 0; i < dp.size(); i++) {
+    if(dp[i] == ans) {
+        while(1) { path_sol.push_back(v[i]); i = path[i]; if(i == -1) break; }
+        break;
+    }
+}
+reverse(all(path_sol));
+vpf(path_sol, ans);
 
 
-//************** LIS by binary search *****************
+// ************** LIS by binary search *****************
 
+
+// ******** nlogn LIS size and genarete LIS : opmizing a dp *************
+
+
+// defination of orginal dp solution was....
+// dp[i] = the last element of the LIS with length i
+
+// implementation is like this
+vi ar(n);
+vi dp(n+1, inf);
+dp[0] = -inf;
+
+for(int i = 0; i < n; i++) {
+    for(int j = 1; j <= n; j++) { // this loop is updating only once
+    // and dp array in allways sorted so we can select index by binary search
+        if(dp[j-1] < ar[i] && ar[i] < dp[i]) dp[i] = ar[i];
+    }
+}
+
+** LIS is the lst i where dp[i] < inf
+
+// dp[i] = index of the last element of the LIS with size i
+// path[i] = index of the value ar[dp[i-1]] which was places before i.
+
+int n; cin >> n;
+vi dp(n+1, intmx);
+dp[0] = -intmx;
+
+vi ar(n);
+
+for(int i = 0; i < n; i++) {
+    cin >> ar[i];
+
+    int idx, lo = 0, hi = n-1;
+    while(lo <= hi) {
+
+        int mid = (lo + hi) / 2;
+        if(dp[mid] < ar[i]) {
+        
+            idx = mid;
+            lo = mid + 1;
+        }
+        else hi = mid - 1;
+    }
+
+    dp[idx+1] = ar[i];
+} 
+
+
+int ans = 0;
+for(int i = 1; i <= n; i++) { 
+    if(dp[i] != intmx) ans = i;
+}
+cout << ans << endl;
+
+
+
+
+// ******** Implementaion of the idea above : using set *******
 
 int lis_binary_search(vector<int> v){
     set<int> st;
     for(int i=0;i<v.size();i++){
         auto x = st.lower_bound(v[i]);
-        if(x == st.end()) st.insert(x);
+        if(x == st.end()) st.insert(v[i]);
         else {
             st.erase(*x);
             st.insert(v[i]);
@@ -3865,6 +4365,7 @@ int main(){
 }
 
 //********* Partion a set into a number of subset of same sum *************
+
 bool set_pertition(vi &v, int terget, int segment, int remain, int start, int mask) {
     if(segment == 0) return 1;
 
@@ -3887,7 +4388,8 @@ bool set_pertition(vi &v, int terget, int segment, int remain, int start, int ma
     return 0;
 }
 
-//****************************************************************************
+//********* knapsack | O(n) memory | based on weight | based on value ***********
+
 
 
 
@@ -4153,10 +4655,265 @@ int main() {
 //_____________________________________________________________________________________________
 
 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+******************************* String processing ********************************************
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+********** KMP : Knuth–Morris–Pratt string processing algorithm ************
+
+vi kmp(string pattern) {
+    
+    int n = pattern.size();
+    vi prf(n);
+    
+    for(int i = 1; i < n; i++) {
+        int j = prf[i-1];
+
+        while(j > 0 && pattern[j] != pattern[i]) j = prf[j-1];
+        if(pattern[j] == pattern[i]) j++;
+
+        prf[i] = j;
+    }
+    return prf;
+}
+
+vi naive_kmp(string pattern) {
+    vi ret;
+
+    for(int i = 0; i < pattern.size(); i++) {
+        int x = 0;
+        for(int j = 0; j < i; j++) {
+
+            int y = j+1, flg = 1;
+            int lo = 0, hi = i-j;
+
+            while(y--) {
+                if(pattern[lo] != pattern[hi]) {
+                    flg = 0; break;
+                }
+                else {
+                    lo++; hi++;
+                }
+            }
+            if(flg) x = j+1;
+        }
+        
+        ret.push_back(x);
+    }
+    return ret;
+}
+
+// count of all occerance of prefixes of a string s
+
+vi count_of_all_prefix_occerance(string s) {
+    
+    int n = s.size();
+
+    vi pi = kmp(s);
+    vi prefix_count(n+1);
+
+    for(int i = 0; i < n; i++) prefix_count[pi[i]]++;
+    for(int i = n-1; i > 0; i--) prefix_count[pi[i-1]] += prefix_count[i];
+    for(int i = 1; i <= n; i++) prefix_count[i]++;
+
+    return prefix_count;
+}
+
+// total distinct substring
+
+int distinct_substring(string s) {
+    int ret = 0;
+    for(int i = 0; i < s.size(); i++) {
+        vi v = kmp(s.substr(i, s.size()));
+        int x = max_ele(v);
+        ret += ((s.size()-i)-x);
+    }
+    return ret;
+}
+
+
+//************************************************************************
+
+
+******************************* Hashing **********************************
+
+// 7 digit prime
+1011001 3109081 4136537 4612717 8288213 6346973 2111309 3907529 2244163 3007241 5992073
+1010003 4470911 3379289 3454183 1400261 3613321 3516011 7888207 6134743 5394139 9476743
+
+// 10 digit prime
+9123457199 9123457381 9123457663 9123457423 9123457529 9123457529 9123457051 9123457631 9123457117 9123457523
+9123457163 9123457663 9123457769 9123457117 9123456791 9123457177 9123457423 9123457769 9123457481 
+
+// 16 difit prime
+1737476797107127
+
+// fixed string hash : do double hash
+int string_hash(string s, int b, int m) {
+ 
+    ll ret = 0;
+    ll power = 1;
+ 
+    for(char c : s) {
+        ret = (ret + (((int)c) * power)) % m;
+        power = (power * b) % m;
+    }
+    return (int)ret;
+}
+ 
+// Rabin-karp  | all occerance of pattern in text
+vi rabin_karp(string pattern, string text, ll b, ll m) {
+
+    int p = pattern.size(), t = text.size();
+
+    vl power(max(t, p));
+    power[0] = 1;
+
+    for(int i = 1; i < power.size(); i++) power[i] = (power[i-1] * b) % m;
+
+    vl text_hash(t + 1);
+    for(int i = 0; i < t; i++) {
+        text_hash[i+1] = (text_hash[i] + (text[i] - 'a' + 1) * power[i]) % m;
+    }
+
+    ll pattern_hash = 0;
+    for(int i = 0; i < p; i++) {
+        pattern_hash = (pattern_hash + (pattern[i] - 'a' + 1) * power[i]) % m;
+    }
+
+    vi occer;
+
+    for(int i = 0; i + p - 1 < t; i++) {
+
+        ll hash = (text_hash[i + p] - text_hash[i] + m) % m;
+        
+        if(hash == pattern_hash * power[i] % m) {
+            occer.push_back(i);
+        }
+    }
+    return occer;
+}
+
+// substring match of a string
+vl rolling_hash(string txt, ll b, ll m) {
+    int t = txt.size();
+
+    vl power(t); power[0] = 1;
+    for(int i = 1; i < t; i++) power[i] = (power[i-1] * b) % m;
+
+    vl h(t+1);
+    for(int i = 0; i < t; i++) h[i+1] = (h[i] + (txt[i]-'a'+1) * power[i]) % m;
+
+    return h;
+}
+
+bool substring_match_by_rolling_hash(int a, int b, int l, vl &h1, vl &h2, vl &power1, vl &power2) {
+
+    ll ah1 = (h1[a+l] + 1400261 - h1[a]) % 1400261;
+    ah1 = (ah1 * power1[b-a]) % 1400261;
+
+    ll ah2 = (h2[a+l] + 3613321 - h2[a]) % 3613321;
+    ah2 = (ah2 * power2[b-a]) % 3613321;
+    
+    ll bh1 = (h1[b+l] + 1400261 - h1[b]) % 1400261;
+    ll bh2 = (h2[b+l] + 3613321 - h2[b]) % 3613321;
+
+    if(ah1 == bh1 && ah2 == bh2) return 1;
+    return 0;
+}
+
+// occerance count by rolling hash
+inline int occerance(const string &word, const string &text, const ll &b, const ll &m) {
+
+    int w = word.size(), t = text.size();
+
+    vl power(t);
+    power[0] = 1;
+    for(int i = 1; i < t; i ++) power[i] = (power[i-1] * b) % m;        
+
+    ll wh = 0;
+    for(int i = 0; i < w; i++) wh = (wh + (word[i] - 'A' + 1) * power[i]) % m;
+
+    vl th(t+1);
+    for(int i = 0; i < t; i++) th[i+1] = (th[i] + (text[i] - 'A' + 1) * power[i]) % m;
+
+    int cnt = 0; 
+
+    for(int i = 0; i+w-1 < t; i++) {
+        ll t1_hash = (th[i+w] + m - th[i]) % m;
+        ll w1_hash = (wh * power[i]) % m;
+        
+        if(t1_hash == w1_hash) cnt++;
+    }
+
+    return cnt;
+}
+
+********************* Z - Algorithm ***************************
+
+vi z_array(string s) {
+    int n = s.size();
+    vi ret(n);
+
+    int lo = 0, hi = 0;
+    for(int i = 1; i < n; i++) {
+
+        if(hi <= i) { 
+            lo = 0; hi = i;
+            while(hi < n && s[lo] == s[hi]) {
+                lo++; hi++;
+                ret[i]++;    
+            }
+        }
+        else{
+            int j = 1;
+            while(j < lo) {
+                ret[i] = ret[j];
+                if(ret[i]+i >= hi) {
+                    ret[i] = min(hi-i, ret[i]);
+                    lo = ret[i];
+                    while(hi < n && s[lo] == s[hi]) {
+                        lo++; hi++;
+                        ret[i]++;   
+                    }
+                    i++;
+                    break;
+                }
+                i++; j++;
+            }
+            i--;
+        }
+    }
+    return ret;
+}
+
+// a smalla implementation
+
+vi z_array(string s) {
+    int len = s.size();
+    vi z(len); int left, right; left = right = 0;
+
+    for(int i = 1; i < len; i++) {
+        if(i <= right) 
+            z[i] = min(z[i - left], right - i + 1]);
+        while(i + z[i] < len && s[i+z[i]] == s[z[i]]) z[i]++;
+        if(i + z[i] - 1 > right)
+            left = i; right = i + z[i] - 1;
+    }
+    return z;
+}
+
+
+// -----------------------------------------------------------------------------------
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 *********************************************************************************************
 //////////////////////////////////////////////////////////////////////////////////////////////
-
 
 
 int main(){
