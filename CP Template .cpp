@@ -396,7 +396,7 @@ set4:
 
 //**** Trailing zeros & number of digit in factorial of a number in any base ***********
 
-we can break the Base B as a product of primes : :   B = a^p1 * b^p2 * c^p3 * …
+we can break the Base B as a product of primes : B = a^p1 * b^p2 * c^p3 * …
 
 Then the number of trailing zeroes in N factorial in Base B is given by the formulae
 = min{ 1/p1(n/a + n/(a*a) + ….), 1/p2(n/b + n/(b*b) + . .), ….}.
@@ -469,11 +469,12 @@ int rev_g (int g) {
 
 //***** normal prime generator *****
 int isprime(int n){
-    if(n<=2)return 1;
-    if(!(n&1))return 0;
-    int x=sqrt(n)+1;
-    for(int i=3;i<=x;i+=2){
-        if(n%i==0)return 0;
+    if(n < 2) return 0;
+    if(n == 2) return 1;
+    if(!(n & 1)) return 0;
+    int x = sqrt(n) + 1;
+    for(int i = 3; i <= x; i += 2) {
+        if(n % i == 0) return 0;
     }
     return 1;
 }
@@ -595,8 +596,31 @@ void linear_sieve(int n){
         }
     }
 }
-//********************************************************************
 
+//*************** most optimized sieve : from tanima ***************************
+
+vector <int> prime; //In this vector all the primes are saved
+bitset<MAXP> mark; //nonprime indexes are true, prime indexes are false here
+
+void sieve(){
+    int m=1.0*sqrt(MAXP)+2; int x;
+    prime.push_back(2); prime.push_back(3);
+    mark[0]=mark[1]=true;
+    for(int i=4;i<MAXP;i+=2)mark[i]=true;
+    for(int i=9;i<MAXP;i+=6)mark[i]=true;
+    for(int i=5;i<MAXP;i+=6){
+        if(!mark[i]){
+            prime.push_back(i);
+            if(i<=m) 
+                for(int j=i*i;j<MAXP;j+=2*i)mark[j]=true;
+        }
+        if(!mark[i+2]){ x=i+2;
+            prime.push_back(x);
+            if(x<=m)
+                for(int j=x*x;j<MAXP;j+=2*x)mark[j]=true;
+        }
+    }
+}
 
 //******************* Factorial Modulas *************************
 int factmod(int n, int p) { //O(plog(n))
@@ -680,7 +704,7 @@ vector<int> logn_prime_factor(int n){
     return ret;
 }
 
-//***** Prime factor of Factorial *******
+// *************************** Prime factorization of Factorial ***********************************
 
 map<int,int> factorial_prime_factor(int n){//need all prime upto n
     map<int,int> mp;
@@ -695,6 +719,18 @@ map<int,int> factorial_prime_factor(int n){//need all prime upto n
     return mp;
 }
 
+// ********* sum of number of divisor of all number upto n : snod *************
+
+int SNOD( int n ) {
+    int res = 0;
+    int u = sqrt(n);
+    for ( int i = 1; i <= u; i++ ) {
+        res += ( n / i ) - i; //Step 1
+    }
+    res *= 2; //Step 2
+    res += u; //Step 3
+    return res;
+}
 
 //******* prime factorization sqrt(n) *********
 
@@ -845,11 +881,11 @@ vector<int> divisor_in_sqrt(int n){
 }
 
 //**** all devisors for number from 1 to n in nlogn *****
-vector<int> devisors[10000100];
-void Devisors(int n){
+vector<int> divisors[10000100];
+void Divisors(int n){
     for(int i=1;i<=n;i++){
         for(int j=i;j<=n;j+=i){
-            devisors[j].push_back(i);
+            divisors[j].push_back(i);
         }
     }
 }
@@ -1059,7 +1095,64 @@ ll binpow(ll a, ll b, ll m) {
     }
     return res;
 }
-//**************************************************************
+
+//********************* GCD LCM ***********************
+
+a * b = lcm * gcd;
+
+int gcd(int a,int b){
+    if(a%b==0)return b;
+    return gcd(b,a%b);
+}
+
+int lcm(int a,int b){
+    return (a*b)/gcd(a,b);  
+}
+
+ll extended_euclid(ll a, ll b, ll &x, ll &y){// egcd
+    if(b==0)
+    {
+        x=1;y=0;
+        return a;
+    }
+    ll x1,y1;
+    ll temp=extended_euclid(b,a%b,x1,y1);
+    x=y1;
+    y=x1-y1*(a/b);
+    return temp;
+}
+
+
+//**************** Extended Euclid Algorithm : egcd ************************
+
+//      q       r      x       y
+//              a      1       0
+//              b      0       1
+
+int ext_gcd(int a, int b, int *X, int *Y) {
+    int q1, r1 = a, x1 = 1, y1 = 0;
+    int q2, r2 = b, x2 = 0, y2 = 1;
+    while(r2 != 0) {
+        int q = (r1 / r2), r = r1 - (q * r2), x = x1 - (q * x2), y = y1 - (q * y2);
+        q1 = q2; r1 = r2; x1 = x2; y1 = y2;
+        q2 = q; r2 = r; x2 = x; y2 = y;
+    }
+    *X = x1; *Y = y1;
+    return r1;
+}
+
+int main() {      
+
+    int a, b, x, y; 
+    cin >> a >> b; 
+    if(a < b) swap(a, b);
+       
+    int gc = ext_gcd(a, b, &x, &y);
+
+    cout << "solution : (" << a << "*" << x << ") + (" << b << "*" << y << ") = " << gc << "\n"; 
+
+    return 0;
+}
 
 
 //********** Farmet Little theorem : "Primility test" **********
@@ -1158,35 +1251,6 @@ int day_of_week(int d,int m,int y){//first day 1 = Monday
 }
 
 //*****************************************************
-
-
-//********************* GCD LCM ***********************
-
-a * b = lcm * gcd;
-
-int gcd(int a,int b){
-    if(a%b==0)return b;
-    return gcd(b,a%b);
-}
-
-int lcm(int a,int b){
-    return (a*b)/gcd(a,b);  
-}
-
-ll extended_euclid(ll a, ll b, ll &x, ll &y){// egcd
-    if(b==0)
-    {
-        x=1;y=0;
-        return a;
-    }
-    ll x1,y1;
-    ll temp=extended_euclid(b,a%b,x1,y1);
-    x=y1;
-    y=x1-y1*(a/b);
-    return temp;
-}
-
-//******************************************************
 
 
 //******* Number Conversion, Convert any base to any base ***************
@@ -1999,7 +2063,7 @@ int evalute_postfix(string s){
 }
 //*************************************************************
 
-//******************* disjoint set uniun ********************
+//******************* DSU : disjoint set uniun ********************
 
 int find(int x){
     if(arr[x]==x)return x;
@@ -2717,6 +2781,216 @@ int main() {
     return 0;
 }
 
+// mo's algo
+// CF 617 E. XOR and Favorite Number
+
+
+ll bucket_size;
+struct bucket_data{
+    ll l, r, idx, l_buc;
+    bucket_data(ll a, ll b, ll c) {
+        l = a; r = b; idx = c; l_buc = a / bucket_size;
+    }
+};
+vi ar;
+
+bool cmp(bucket_data x, bucket_data y) {
+    if(x.l_buc == y.l_buc) {
+        if(x.l_buc & 1) return x.r > y.r;
+        else return x.r < y.r;
+    }
+    return x.l_buc < y.l_buc;
+}
+
+ll ans = 0;
+vl frq(10000005,0);
+ll lo, hi, k;
+
+void add(ll x) {
+    ans += frq[x ^ k];
+    frq[x]++;
+}
+
+void remove(ll x) {
+    frq[x]--;
+    ans -= frq[x ^ k];
+}
+
+void solve(ll l, ll r) { 
+
+    while(hi < r) {
+        hi++; add(ar[hi]);
+    }
+    while(hi > r) {
+        remove(ar[hi]);
+        hi--;
+    }
+    while(lo < l) {
+        remove(ar[lo]);
+        lo++;
+    }
+    while(lo > l) {
+        lo--;
+        add(ar[lo]);
+    }
+}
+
+int main() {
+
+    ll n, q; 
+    cin >> n >> q >> k;
+        
+    bucket_size = sqrt(n) + 1;
+    ar = vi(n+1);
+    
+    for(ll i = 1; i <= n; i++) {
+        cin >> ar[i]; ar[i] = ar[i] ^ ar[i-1];
+    }
+
+    vector<bucket_data> qry;
+    for(ll i = 0; i < q; i++) {
+        ll l, r; cin >> l >> r;
+        qry.push_back(bucket_data(l-1, r, i));
+    }
+    sort(all(qry), cmp);
+
+    lo = hi = 0;
+    add(0);
+
+    vi sol(q);
+    for(ll i = 0; i < q; i++) { 
+        
+        solve(qry[i].l, qry[i].r);
+        sol[qry[i].idx] = ans;
+    }
+
+    for(ll i = 0; i < q; i++) cout << sol[i] << "\n";
+
+    return 0;
+}
+
+// screenshot technique
+
+int n;
+vi adj[100005];
+int height[100005];
+ll val[100005];
+
+
+inline void calculate_height(int u, int prv) { 
+    stack<pii> st;
+    st.push({u, prv});
+
+    while(st.size()) {
+        pii tp = st.top(); st.pop();
+        u = tp.ff; prv = tp.ss;
+        for(auto v : adj[u]) {
+            if(v != prv) {
+                height[v] = height[u] + 1;
+                st.push({v, u});
+            }
+        }
+    }
+}
+
+inline ll update(int u, int prv) {
+    ll ret = 0;
+    for(auto v : adj[u]) {
+        if(v != prv) {
+            ret = add(ret, update(v, u));
+        }
+    }
+    if(ret == 0) return val[u];
+    val[u] = ret;
+    return add(ret, ret);
+}
+
+vii buffer;
+inline void take_screenshot() {
+    for(auto i : buffer) {
+        val[i.ff] = add(val[i.ff], i.ss);
+    }
+    buffer = vii();
+    update(1, -1);
+}
+
+vi intime(100005);
+vi outime(100005);
+int timer;
+
+inline void set_time(int u, int prv) {
+    timer++;
+    intime[u] = timer;
+    for(auto v : adj[u]) {
+        if(v != prv) set_time(v, u);
+    }
+    timer++;
+    outime[u] = timer;
+}
+
+inline bool is_in_subtree(int u, int v) {
+    if(intime[u] <= intime[v] && outime[u] >= outime[v]) return 1;
+    return 0;
+}
+
+int main() {
+
+    TEST_CASE {
+        printf("Case %d:\n", cs);
+
+        n = II;
+        for(int i = 0; i <= n; i++) {
+            adj[i].clear();
+            val[i] = height[i] = 0LL;
+        }
+        buffer = vii();
+
+        for(int i = 1; i < n; i++) {
+            int x = II, y = II;
+
+            adj[x].push_back(y);
+            adj[y].push_back(x);
+        }
+
+        calculate_height(1, -1);
+
+        timer = 0;
+        set_time(1, -1);
+
+        int q = II, cnt = 0, lim;
+        lim = sqrt(q)+1;
+
+        while(q--) {
+            if(cnt == lim) {
+                cnt = 0;
+                take_screenshot();
+            }
+            ll x = LL, y;
+
+            if(x == 1) {
+                x = LL;
+                ll ans = val[x];
+                for(auto i : buffer) {
+                    if(is_in_subtree(x, i.ff)) {
+
+                        ans = sub(ans, multi(exp(2, (height[i.ff] - height[x] - 1)), val[i.ff]));
+                        ans = add(ans, multi(exp(2, (height[i.ff] - height[x] - 1)), add(val[i.ff], i.ss)));
+                    }
+                }
+                printf("%lld\n", ans);
+            }
+            else {
+                x = II; y = II;
+                buffer.push_back({x,y});
+            }
+
+            cnt++;
+        }
+    }
+
+    return 0;
+}
+
 
 // *******************************************************************************************
 
@@ -2727,7 +3001,7 @@ int main() {
 //////////////////////////////////////////////////////////////////////////////////////////////
 //to cheak a number is power of two or not
 int ispowof2(int n){
-    if((n & (n - 1)) == 0)return 1;
+    if((n & (n - 1)) == 0) return 1;
 }
 
 //Convert UpperCase to LowerCase
@@ -3019,13 +3293,40 @@ for_each(all(v), func);
 
 //**************************************************************************** 
 
-// function inside main function
+// lambda function or function inside main function
 auto sum = [&](int x, int y) {
     return x+y;
 };
 
 cout << sum(5, 15) << endl;
+
 //**************************************************************************** 
+// c++ File input output
+
+    ifstream fin;
+    fin.open("in.txt");
+
+    vector<string> vs; 
+    while(fin) {
+        string s;
+        getline(fin, s);
+        vs.push_back(s);
+    }
+    fin.close();
+
+    
+    ofstream fout;
+    fout.open("out.txt");
+
+    for(auto i : vs) {
+        cout << i << endl;
+        fout << i << endl;
+    }
+    fout.close();
+//**************************************************************************** 
+
+
+
 
 
 
@@ -3110,37 +3411,6 @@ while(k--) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-//***************** Dijkstra ******************
-struct data{
-    int node, d;
-}
-bool vis[MAX+10];
-int dist[MAX+10];
-
-int dijkstra(int source){ 
-    priority_queue<data>PQ;
-    for(int i = 1; i<=n; i++) dist[i] = inf;
-
-    dist[source] = 0;
-    PQ.push({source, 0});
-
-    while(PQ.empty() == false) {
-        int u = PQ.top().node;
-        int d = PQ.top().d
-        PQ.pop();
-        //----------------------------------
-        if(dist[u] < d) continue;
-        //if(vis[u]) continue;
-        //vis[u] = true;for(v adjacent to u)
-        //----------------------------------
-        if(dist[v] > dist[u]+cost[u][v]) {
-        dist[v] = dist[u] + cost[u][v];
-            PQ.push({v, dist[v]});
-        }
-    }
-}
-
-
 //******************** BFS ********************
 
 vector<vector<int>> adj;  // adjacency list representation
@@ -3203,8 +3473,250 @@ while (!q.empty()) {
     }
 }
 
+//***************** Dijkstra ******************
 
-//********************* Topological sort / order ************************
+struct data{
+    int node, d;
+}
+bool vis[MAX+10];
+int dist[MAX+10];
+
+int dijkstra(int source){ 
+    priority_queue<data>PQ;
+    for(int i = 1; i<=n; i++) dist[i] = inf;
+
+    dist[source] = 0;
+    PQ.push({source, 0});
+
+    while(PQ.empty() == false) {
+        int u = PQ.top().node;
+        int d = PQ.top().d    
+        PQ.pop();
+        //----------------------------------
+        if(dist[u] < d) continue;
+        //if(vis[u]) continue;
+        //vis[u] = true;for(v adjacent to u)
+        //----------------------------------
+        for(auto v : adj[u]) {
+            if(dist[v] > dist[u]+cost[u][v]) {
+                
+                dist[v] = dist[u] + cost[u][v];
+                PQ.push({v, dist[v]});
+            }
+        }
+    }
+}
+
+// *************** bidirectional dijkstra *********************
+
+struct data{
+    int node, weight;
+    data(int a, int b) {
+        node = a; weight = b;
+    }
+};
+
+bool operator < (data a, data b) {
+    return a.weight > b.weight;
+}
+
+vii fg[1000005];
+vii rg[1000005];
+
+bool fprocessed[1000005], rprocessed[1000005];
+
+void dijkstra(int a, int b) {
+
+    vl fcost(1000005, inf);
+    vl rcost(1000005, inf);
+    
+    priority_queue<data> fq, rq;
+    MS0(fprocessed); MS0(rprocessed);
+
+    fcost[a] = 0;
+    rcost[b] = 0;
+    
+    fq.push(data(a, 0));
+    rq.push(data(b, 0));
+
+    ll ans = inf;
+
+    while(fq.size() || rq.size()) {
+        int fu = -1, ru = -1;
+
+        if(fq.size()) {
+            fu = fq.top().node; fq.pop();
+            if(!fprocessed[fu]) {
+                fprocessed[fu] = 1;
+
+                for(auto x : fg[fu]) {
+                    int v = x.ff, w = x.ss;
+
+                    if(fcost[fu] + w < fcost[v]) {
+                        fcost[v] = fcost[fu] + w;
+
+                        fq.push(data(v, fcost[v]));
+                        if(rprocessed[v]) ans = min(ans, fcost[v]+rcost[v]);
+                    }
+                }
+            }
+        }
+        if(rq.size()) {
+            ru = rq.top().node; rq.pop();
+            if(!rprocessed[ru]) {
+                rprocessed[ru] = 1;
+
+                for(auto x : rg[ru]) {
+                    int v = x.ff, w = x.ss;
+
+                    if(rcost[ru] + w < rcost[v]) {
+                        rcost[v] = rcost[ru] + w;
+
+                        rq.push(data(v, rcost[v]));
+                        if(fprocessed[v]) ans = min(ans, fcost[v]+rcost[v]);
+                    }
+                }
+            }
+        }
+
+        bool flg = 0;
+        if(fu != -1) {
+            if(fprocessed[fu] && rprocessed[fu]) {
+                ans = min(ans, fcost[fu] + rcost[fu]);
+                flg = 1;
+            }
+        }
+        if(ru != -1) {
+            if(fprocessed[ru] && rprocessed[ru]) {
+                ans = min(ans, fcost[ru] + rcost[ru]);
+                flg = 1;
+            }
+        }
+        if(flg) break;
+    }
+
+    if(ans == inf) printf("-1\n");
+    else printf("%lld\n", ans);
+}
+
+int main() {
+
+    int n = II, m = II;
+    for(int i = 0; i < m; i++) {
+        int u = II, v = II, w = II;
+        fg[u].push_back({v, w});
+        rg[v].push_back({u, w});
+    }
+
+    int q = II;
+    while(q--) {
+        int u = II, v = II;
+        dijkstra(u, v);
+    }
+
+    return 0;
+}
+
+// *********************** A* algorithm | co-ordinate of nodes are given ****************************
+
+
+int n, m;
+int x_ax[200005], y_ax[200005];
+vii adj[200005];
+
+int dis_from_end[200005], dis_from_start[200005];
+bool processed[200005];
+
+void A_star(int a, int b) {
+    for(int i = 1; i <= n; i++) {
+        dis_from_end[i] = dis2d(x_ax[i], y_ax[i], x_ax[b], y_ax[b]);
+        dis_from_start[i] = dis2d(x_ax[i], y_ax[i], x_ax[a], y_ax[a]);
+    }
+
+    vector<ll> st_dis(200005, inf);
+    priority_queue<data> pq;
+    MS0(processed);
+
+    pq.push(data(a, dis_from_end[a]));
+    st_dis[a] = 0;
+
+    while(pq.size()) {
+        int u = pq.top().node; pq.pop();
+        
+        if(!processed[u]) {
+            processed[u] = 1;
+
+            for(auto x : adj[u]) {
+                int v = x.ff, w = x.ss;
+                if(st_dis[u] + w < st_dis[v]) {
+                    st_dis[v] = st_dis[u] + w;
+                    pq.push(data(v, st_dis[v] + dis_from_end[v]));
+                }
+            }
+        }
+    }
+    if(st_dis[b] == inf) printf("-1\n");
+    else printf("%lld\n", st_dis[b]);
+}
+
+int main() {
+
+    n = II; m = II;
+    for(int i = 1; i <= n; i++) {
+        x_ax[i] = II;
+        y_ax[i] = II;
+    }
+    for(int i = 1; i <= m; i++) {
+        int a = II, b = II, w = II;
+        adj[a].push_back({b, w});
+    }
+
+    int q = II;
+    while(q--) {
+        int source = II, distanation = II;
+        A_star(source, distanation);
+    }
+
+    return 0;
+}
+
+
+// ***************** K'th Shortest Path ***********************
+
+vii adj[105];
+
+void dijkstra(int k, int s, int e) {
+    vi shortest_path[105];
+    vi used(105, 0);
+    set<pii > Q;
+
+    Q.insert({0,s});
+
+    while(Q.size()) {
+        int u = Q.begin()->ss, d = Q.begin()->ff;
+        Q.erase(Q.begin());
+
+        if(used[u] == k) continue;
+        used[u]++;
+        shortest_path[u].push_back(d);
+
+        for(auto x : adj[u]) {
+
+            int v = x.ss, w = x.ff;
+            Q.insert({d+w, v});
+        }
+    }
+
+    for(int i = 0; i < shortest_path[e].size(); i++) {
+        cout << i+1 << "'th Shortest path : " << shortest_path[e][i] << "\n";    
+    }
+}
+
+
+
+
+//********************* Topological sort : Using BFS ************************
+
 int n, m;
 int in[n]; MS0(in);
 vector<int> adj[n];
@@ -3238,36 +3750,272 @@ if(cnt == n) printf("Topological order exist.\n");
 else printf("Doesn't exist.\n");
 
 
-//****************** K'th Shortest Path ***********************
 
-vii adj[105];
+// ******************* Topological sort : Using DFS **********************
 
-void dijkstra(int k, int s, int e) {
-    vi shortest_path[105];
-    vi used(105, 0);
-    set<pii > Q;
+vi adj[105];
+bool used[105];
+vi ans;
 
-    Q.insert({0,s});
+void topsort(int u) {
+    for(auto v : adj[u]) {
+        if(!used[v]) {
+            used[v] = 1;
+            topsort(v);
+        }
+    }
+    ans.push_back(u);
+}
 
-    while(Q.size()) {
-        int u = Q.begin()->ss, d = Q.begin()->ff;
-        Q.erase(Q.begin());
+int main() {
 
-        if(used[u] == k) continue;
-        used[u]++;
-        shortest_path[u].push_back(d);
+    int n, m;
+    while(cin >> n >> m) {
+        if(n == 0 && m == 0) break;
 
-        for(auto x : adj[u]) {
+        for(int i = 0; i <= n; i++) {adj[i] = vi(); used[i] = 0;}
+        ans = vi();
 
-            int v = x.ss, w = x.ff;
-            Q.insert({d+w, v});
+        for(int i = 0; i < m; i++) {
+            int a, b; cin >> a >> b;
+            adj[a].push_back(b);
+        }
+
+        for(int i = 1; i <= n; i++) {
+            if(!used[i]) {
+                used[i] = 1;
+                topsort(i);
+            }
+        }
+        reverse(all(ans));
+        vpf(ans);
+    }
+}
+
+// **************** Floyd's cycle finding ****************************
+
+node *find_cycle(node *head) {
+    if(head == NULL) return NULL;
+    
+    node *a = head, *b = head, *c = head;
+    
+    a = a->next;
+    if(a == NULL) return NULL;
+    b = b->next->next;
+    if(b == NULL) return NULL;
+    
+    while(a != b) { //cout << a->val << " " << b->val << "\n";
+        a = a->next;
+        b = b->next;
+        if(b == NULL) return NULL;
+        b = b->next;
+        if(b == NULL) return NULL;
+    }
+    //cout <<"match : "<< a->val << " " << b->val << endl;
+    
+    while(a != c) {
+        a = a->next;
+        c = c->next;
+    }
+    return c;
+}
+
+// ********************* MST : Minimum Spaning Tee ****************************
+
+struct edge{
+    int u, v, w;
+    edge(int _u, int _v, int _w) {
+        u = _u; v = _v; w = _w;
+    }
+    bool operator<(const edge &other) {
+        return w < other.w;
+    }
+};
+
+vi parent;
+int find_parent(int u) {
+    if(parent[u] == u) return u;
+    return parent[u] = find_parent(parent[u]);
+}
+
+edge mst(int number_of_node, int number_of_edge) {
+    vector<edge> ed;
+
+    for(int i = 0; i < number_of_edge; i++) {
+        int u, v, w; cin >> u >> v >> w;
+        ed.push_back(edge(u, v, w));
+    }    
+    sort(all(ed));
+
+    parent = vi(n+5);
+    for(int i = 0; i <= n; i++) parent[i] = i;
+
+    vector<edge> mst;
+
+    for(edge i : ed) {
+        if(find_parent(i.u) != find_parent(i.v)) {
+            parent[find_parent(i.u)] = find_parent(i.v);
+            mst.push_back(i);
         }
     }
 
-    for(int i = 0; i < shortest_path[e].size(); i++) {
-        cout << i+1 << "'th Shortest path : " << shortest_path[e][i] << "\n";    
+    return mst;
+}
+
+// ************** Strongly Connected component : kosaraju's algo *************
+
+vi adj[100005];
+vi trns[100005];
+bool used[100005];
+stack<int> tops;
+
+void topsort(int u) {
+    used[u] = 1;
+    for(auto v : adj[u]) {
+        if(!used[v]) {
+            topsort(v);
+        }
+    }
+    tops.push(u);
+}
+
+vi scc[100005];
+
+void find_scc(int u, int no) {
+    used[u] = 1;
+    scc[no].push_back(u);
+
+    for(auto v : trns[u]) {
+        if(!used[v]) {
+            find_scc(v, no);
+        }
     }
 }
+
+int main() {
+
+    int n, m; cin >> n >> m;
+    for(int i = 0; i < m; i++) {
+        int u, v; cin >> u >> v;
+        adj[u].push_back(v);
+        trns[v].push_back(u);
+    }
+
+    for(int i = 1; i <= n; i++) {
+        if(!used[i]) {
+            topsort(i);
+        }
+    }
+
+    MS0(used);
+    int scc_no = 0;
+
+    while(tops.size()) {
+        int x = tops.top(); tops.pop();
+        if(!used[x]) {
+            find_scc(x, ++scc_no);
+        }
+    }
+
+    cout << "Total SCC : "<< scc_no << "\n";
+    for(int i = 1; i <= scc_no; i++) {
+        cout << i << " : ";
+        for(auto j : scc[i]) cout << j << " ";
+        cout << "\n";
+    }
+
+    return 0;
+}
+
+
+// *********************** Bellman-Ford Algorithm *******************************
+
+int is_there_negative_cycle(int n, viii &edge) {
+    vl cost(1005, inf);
+    cost[1] = 0;
+
+    for(int i = 1; i < n; i++) {
+        for(auto j : edge) {
+            cost[j.ss.ff] = min(cost[j.ss.ff], cost[j.ff] + j.ss.ss);
+        }
+    }
+    int ret = 0;
+    for(auto j : edge) {
+        if(cost[j.ss.ff] > cost[j.ff] + j.ss.ss) {
+            ret = 1; break;
+        }
+    }
+    return ret;
+}
+
+// shortest path || no_path || neg cycle
+
+int main() {
+
+    int n, m;  cin >> n >> m;
+    vector<pair<int,ll> > adj[1005];
+
+
+    for(int i = 1 ; i <= m; i++) {
+        int a, b; ll w; cin >> a >> b >> w;
+        adj[a].push_back({b,w});
+    }
+
+    int s; cin >> s;
+
+    vl cost(1005, inf); // inf is LONG_MAX
+    vi reachable(1005);
+
+    cost[s] = 0;
+    reachable[s] = 1;
+
+    queue<int> q;
+
+    for(int i = 1; i <= n; i++) {
+        for(int u = 1; u <= n; u++) {
+            for(auto j : adj[u]) {
+                int v = j.ff; ll w = j.ss;
+                if(cost[u] != inf && cost[u] + w < cost[v]) {
+                    
+                    cost[v] = cost[u] + w;
+                    reachable[v] = 1;
+
+                    if(i == n) {
+                        q.push(v);
+                    }
+                }
+            }
+        }
+    }
+
+    vector<int> used(1005);
+    vector<int> neg_loop(1005);
+
+    while(q.size()) {
+        int u = q.front(); q.pop();
+        used[u] = 1;
+        neg_loop[u] = 1;
+        for(auto j : adj[u]) {
+            int v = j.ff;
+
+            if(!used[v]) {
+                used[v] = 1;
+                neg_loop[v] = 1;
+                q.push(v);
+            }
+        }
+    }
+
+    for(int i = 1; i <= n; i++) {
+        if(cost[i] == inf) cout << "*\n";
+        else if(neg_loop[i]) cout << "-\n";
+        else cout << cost[i] << "\n";
+    }
+
+    return 0;
+}
+
+
 
 //****************************************  ************* ************************
 
@@ -4241,6 +4989,75 @@ int main(){
     return 0;
 }
 
+// -------------- total count of LIS -------------------------
+
+vector<int> adj[2005];
+vector<int> tree_dp;
+
+int calculate(int u) {
+    
+    if(adj[u].size() == 0) return 1;
+    
+    if(tree_dp[u] != -1) return tree_dp[u];
+    
+    int ret = 0, flg = 1;
+    for(auto v : adj[u]) {
+        flg = 0;
+        ret += calculate(v);
+    }
+    if(flg) return 1;
+    
+    return tree_dp[u] = ret;
+}
+
+int findNumberOfLIS(vector<int>& nums) {
+    if(nums.size() == 0) return 0;
+    if(nums.size() == 1) return 1;
+    
+    vector<int> dp(2005, 1);
+    
+    int lis = 0;
+    
+    for(int i = 0; i < nums.size(); i++) {
+        for(int j = 0; j < i; j++) {
+            if(nums[i] > nums[j]) {
+                dp[i] = max(dp[i], dp[j]+1);
+            }
+        }
+        lis = max(lis, dp[i]);
+    }
+    
+        
+    //cout << "lis = " << lis << endl;
+    
+    vector<int> n_dp(2005, 1);
+    
+    for(int i = 0; i < nums.size(); i++) {
+        for(int j = 0; j < i; j++) {
+            if(nums[i] > nums[j]) {
+                 
+                n_dp[i] = max(n_dp[i], n_dp[j]+1);
+                
+                if(n_dp[j] + 1 == dp[i]) {
+                    adj[i].push_back(j);
+                }
+            }
+        }
+    }
+    int ans = 0;
+    tree_dp = vector<int>(2005, -1);
+    
+    for(int i = 0; i < nums.size(); i++) {
+        if(dp[i] == lis) {
+            ans += calculate(i);
+        }
+    }
+    return ans;
+}
+
+
+
+
 //************************** Tiling DP **************************************
 // light oj tile 2
 
@@ -4390,7 +5207,41 @@ bool set_pertition(vi &v, int terget, int segment, int remain, int start, int ma
 
 //********* knapsack | O(n) memory | based on weight | based on value ***********
 
+// based on weight
+int n, w; cin >> n >> w;
+vl dp(w+1);
 
+while(n--) {
+    int weight, val; cin >> weight >> val;
+    for(int i = w; i >= 0; i--) {
+        if(i - weight >= 0) {
+            dp[i] = max(dp[i], dp[i-weight] + val);
+        }
+    }
+}
+
+cout << max_ele(dp) << "\n";
+
+// based on value
+int n, w; cin >> n >> w;
+    vl dp(100005, inf);
+    dp[0] = 0;
+
+    while(n--) {
+        int weight, val; cin >> weight >> val;
+        for(int i = 100000; i >= 0; i--) {
+            if(i - val >= 0) {
+                dp[i] = min(dp[i], dp[i-val] + weight);
+            }
+        }
+    }
+    int ans = 0;
+    for(int i = 0; i <= 100000; i++) {
+        if(dp[i] <= w) ans = i;
+    }
+    cout << ans << "\n";
+
+//********************************************************************************
 
 
 
