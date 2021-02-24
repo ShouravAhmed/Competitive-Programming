@@ -394,29 +394,42 @@ set4:
 //**************************************************************
 
 
-//**** Trailing zeros & number of digit in factorial of a number in any base ***********
+// ********************** Factorial ******************************
 
-we can break the Base B as a product of primes : B = a^p1 * b^p2 * c^p3 * …
 
-Then the number of trailing zeroes in N factorial in Base B is given by the formulae
-= min{ 1/p1(n/a + n/(a*a) + ….), 1/p2(n/b + n/(b*b) + . .), ….}.
 
-And the number of digits in N factorial is :=: floor (ln(n!)/ln(B) + 1);
+// Number of digit of factorial
 
-unsigned long long tralling_zero_of_factorial_anyBase(vector<pair<long long,int> > v,long long n){
-    unsigned long long zero = ULLONG_MAX;
-    for(int i=0;i<v.size();i++){
-        unsigned long long x=0;
-        long long tmp=n;
-        while(tmp){
-            x+=(tmp/v[i].first);
-            tmp/=v[i].first;
-        }
-        x/=v[i].second;
-        if(x<zero)zero=x;
+int number_of_digit_of_fact( int n, int k ) {
+    double fact = 0, eps = 1e-9;
+    
+    for ( int i = 1; i <= n; i++ ) {
+        fact += log10 ( i );
     }
-    return zero;
+    
+    return (fact+1);
 }
+
+
+// Leading digits of factorial 
+
+int leading_digit_of_fact( int n, int k ) {
+    double fact = 0, eps = 1e-9;
+    
+    for ( int i = 1; i <= n; i++ ) {
+        fact += log10 ( i );
+    }
+    
+    double q = fact - floor ( fact+eps );
+ 
+    double B = pow ( 10, q );
+ 
+    for ( int i = 0; i < k - 1; i++ ) {
+        B *= 10;
+    }
+    return floor(B+eps);
+}
+
 //**************************************************************
 
 
@@ -1419,7 +1432,7 @@ ll C(ll n, ll r){
     return ans;
 }
 
-// -------- NcR using modular inverse -------------
+// -------- NcR using modular inversed -------------
 
 ll fact[MAX+5];
 ll invfact[MAX+5];
@@ -1722,8 +1735,19 @@ ld area_of_polygon(int n){
     return abs(area / 2.0);
 }
 
-//************************************************
+//*************** Check is a point on a line or not **************
 
+bool on_line(int i, int j, int k) {
+    return ((x[i]-x[j]) * (y[i]-y[k]) == (y[i]-y[j]) *(x[i] - x[k]));
+}
+
+// ************ area of triangle ********************************
+
+int area_of_triangle(int a, int b, int c) {
+    int p = (a + b + c) / 2;
+    int area = sqrt(p * (p-a) * (p-b) * (p-c));
+    return area;
+}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -2090,51 +2114,111 @@ int cumulative_sum(vector<vector<int> > arr2d,int a,int b,int c,int d){
     return ans;
 }
 
+// zero indexed
+vector<vector<ll> > cuarr;
+
+struct cumulative_sum {
+
+    inline cumulative_sum() {
+        int xlen = cuarr.size(), ylen = cuarr[0].size();
+
+        for(int i = 0; i < xlen; i++) {
+            for(int j = 0; j < ylen; j++) {
+
+                cuarr[i][j] += ((i?cuarr[i-1][j]:0) + (j?cuarr[i][j-1]:0) - ((i&&j)?cuarr[i-1][j-1]:0));
+            }
+        }
+    }
+
+    inline ll cusum(int a, int b, int c, int d) {
+        return (cuarr[c][d] - (a?cuarr[a-1][d]:0) - (b?cuarr[c][b-1]:0) + ((a&&b)?cuarr[a-1][b-1]:0));
+    }
+};
+
+
 //*********************** Trie ****************************
 
+// Trie :: general peopose template
+
 struct node{
-    bool end;
+    int end; 
+    int path;
     node *next[26];
     node(){
-        end=false;
-        for(int i=0;i<26;i++){
-            next[i]=NULL;
+        path = 0;
+        end = 0;
+        for(int i = 0; i < 26; i++){
+            next[i] = NULL;
         }
     }
 };
-node *root;
 
-void insert(string s){
-    node *now = root;
-    for(int i=0;i<s.size();i++){
-        int id = s[i]-'a';
-        if(now->next[id]==NULL){
-            now->next[id] = new node();
+struct my_trie {
+    node *root;
+    char smallest_ch;
+
+    my_trie(char ch) {
+        root = new node();
+        smallest_ch = ch;
+    }
+
+    bool insert(string s) {
+        node *now = root;
+
+        for(int i = 0; i < s.size(); i++) {
+            int id = s[i] -  smallest_ch;
+        
+            if(now->next[id] == NULL){
+                now->next[id] = new node();
+            }
+
+            now = now->next[id];
+            now->path++;
         }
-        now = now->next[id];
-    }
-    now->end=true;
-}
+        now->end++;
 
-bool search(string s){
-    node *now = root;
-    for(int i=0;i<s.size();i++){
-        int id = s[i]-'a';
-        if(now->next[id]==NULL)return 0;
-        now = now->next[id];
+        return (now->path > 1);
     }
-    if(now->end)return 1;
-    return 0;
-}
 
-void del(node *now){
-    for(int i=0;i<26;i++){
-        if(now->next[i]!=NULL){
-            del(now->next[i]);
+    bool search(string s) {
+        node *now = root;
+        
+        for(int i = 0; i < s.size(); i++){
+            int id = s[i]- smallest_ch;
+
+            if(now->next[id] == NULL) return 0;
+            now = now->next[id];
         }
+        if(now->end) return 1;
+        return 0;
     }
-    delete(now);
-}
+
+    void erase(string s) {
+        if(search(s) == 0) return;
+
+        node *now = root;
+
+        for(int i = 0; i < s.size(); i++) {
+            int id = s[i] -  smallest_ch;
+        
+            now = now->next[id];
+            now->path--;
+        }
+        now->end--;
+    }
+
+    void del(node *now){
+        for(int i = 0; i < 26; i++){
+            if(now->next[i] != NULL){
+                del(now->next[i]);
+            }
+        }
+        delete(now);
+    }
+};
+
+
+
 
 //******** maximum and minimum sub array XOR ********
 
@@ -2339,10 +2423,11 @@ int query(int now, int lo, int hi, int l, int r){
 }
 
 
-//Segment tree lazy update
+// ----- Segment tree lazy update -----
+
 void propagate(int now, int l, int r){
     if(l != r){
-        node[now] += (lazy[now] * (r-l+1));
+        node[now] += lazy[now];
         lazy[now*2] += lazy[now];
         lazy[(now*2)+1] += lazy[now];
         lazy[now] = 0;
@@ -2355,30 +2440,48 @@ void propagate(int now, int l, int r){
     }
 }
 
-void update(int now, int lo, int hi, int l, int r){
+void update(int now, int lo, int hi, int l, int r, int val){
     propagate(now, lo, hi);
 
-    if(lo==l && hi==r){
-        node[now] += (hi-lo+1);
-        lazy[now*2]++; lazy[(now*2)+1]++;
+    if(lo==l && hi==r) {
+        lazy[now] += val;
+        propagate(now, lo, hi);
         return;
     }
 
     int mid = (lo+hi)/2;
     if(r <= mid){
-        update(now*2, lo, mid, l, r);
+        update(now*2, lo, mid, l, r, val);
         propagate((now*2)+1, mid+1, hi);
     }
     else if(l > mid){
-        update((now*2)+1, mid+1, hi, l, r);
+        update((now*2)+1, mid+1, hi, l, r, val);
         propagate(now*2, lo, mid);
     }
     else{
-        update(now*2, lo, mid, l, mid);
-        update((now*2)+1, mid+1, hi, mid+1, r);
+        update(now*2, lo, mid, l, mid, val);
+        update((now*2)+1, mid+1, hi, mid+1, r, val);
     }
 
-    node[now] = node[now*2] + node[(now*2)+1];
+    node[now] = max(node[now*2], node[(now*2)+1]);
+}
+
+int query(int now, int lo, int hi, int l, int r) {
+    propagate(now, lo, hi);
+
+    if(lo == l && hi == r){
+        return node[now];
+    }
+
+    int mid = (lo+hi)/2;
+    
+    if(r <= mid)return query(now*2, lo, mid, l, r);
+    else if(l > mid)return query((now*2)+1, mid+1, hi, l, r);
+    else{ 
+        int x = query(now*2, lo, mid, l, mid);
+        int y = query((now*2)+1, mid+1, hi, mid+1, r);
+        return max(x,y);
+    }
 }
 
 
@@ -5253,7 +5356,7 @@ int n, w; cin >> n >> w;
 
 // _______ Karatsuba fast polynomial multiplication _____________
 
-void print_polynomeal(vi v) {
+void print_polynomial(vi v) {
  
     for(int i = 0, j = v.size()-1 ; i < v.size(); i++, j--) {
  
@@ -5275,7 +5378,7 @@ void print_polynomeal(vi v) {
 }
  
  
-vi multiply_polynomeal_nieve(vi x, vi y) {
+vi multiply_polynomial_nieve(vi x, vi y) {
     vi ret((x.size()*2)-1);
  
     for(int i = 0; i < x.size(); i++) {
@@ -5287,7 +5390,7 @@ vi multiply_polynomeal_nieve(vi x, vi y) {
     return ret;
 }
  
-vi multiply_polynomeal_nieve_d_and_q(vi x, vi y) {
+vi multiply_polynomial_nieve_d_and_q(vi x, vi y) {
     int n = x.size();
     if(n == 1) {
         vi ret(1);
@@ -5304,11 +5407,11 @@ vi multiply_polynomeal_nieve_d_and_q(vi x, vi y) {
     if(x1.size() < y0.size()) x1.push_back(0);
     if(y1.size() < x0.size()) y1.push_back(0);
  
-    vi x1y1 = multiply_polynomeal_nieve_d_and_q(x1, y1);
-    vi x0y0 = multiply_polynomeal_nieve_d_and_q(x0, y0);
+    vi x1y1 = multiply_polynomial_nieve_d_and_q(x1, y1);
+    vi x0y0 = multiply_polynomial_nieve_d_and_q(x0, y0);
  
-    vi x1y0 = multiply_polynomeal_nieve_d_and_q(x1, y0);
-    vi x0y1 = multiply_polynomeal_nieve_d_and_q(x0, y1);
+    vi x1y0 = multiply_polynomial_nieve_d_and_q(x1, y0);
+    vi x0y1 = multiply_polynomial_nieve_d_and_q(x0, y1);
  
  
     vi ret(n*2-1);
@@ -5320,7 +5423,7 @@ vi multiply_polynomeal_nieve_d_and_q(vi x, vi y) {
     return ret;
 }
  
-vi multiply_polynomeal_fast_d_and_q(vi x, vi y) {
+vi multiply_polynomial_fast_d_and_q(vi x, vi y) {
     int n = x.size();
     if(n == 1) {
         vi ret(1);
@@ -5337,8 +5440,8 @@ vi multiply_polynomeal_fast_d_and_q(vi x, vi y) {
     if(x1.size() < y0.size()) x1.push_back(0);
     if(y1.size() < x0.size()) y1.push_back(0);
  
-    vi x1y1 = multiply_polynomeal_fast_d_and_q(x1, y1);
-    vi x0y0 = multiply_polynomeal_fast_d_and_q(x0, y0);
+    vi x1y1 = multiply_polynomial_fast_d_and_q(x1, y1);
+    vi x0y0 = multiply_polynomial_fast_d_and_q(x0, y0);
  
     vi x1Px0(x1.size());
     for(int i = 0; i < x1.size(); i++) {
@@ -5349,7 +5452,7 @@ vi multiply_polynomeal_fast_d_and_q(vi x, vi y) {
         y1Py0[i] = (y1[i] + y0[i]);
     }
  
-    vi mid_item = multiply_polynomeal_fast_d_and_q(x1Px0, y1Py0);
+    vi mid_item = multiply_polynomial_fast_d_and_q(x1Px0, y1Py0);
     for(int i = 0; i < x1y1.size(); i++) mid_item[i] -= (x1y1[i] + x0y0[i]);
  
     vi ret(n*2-1);
@@ -5374,23 +5477,23 @@ int main() {
  
     cout << endl;
     cout << "our polynomials are :" << endl;
-    print_polynomeal(x);
-    print_polynomeal(y);
+    print_polynomial(x);
+    print_polynomial(y);
     cout << endl;
  
     cout << "nieve loop :" << endl;
-    vi pro = multiply_polynomeal_nieve(x, y);
-    print_polynomeal(pro);
+    vi pro = multiply_polynomial_nieve(x, y);
+    print_polynomial(pro);
     cout << endl;
  
     cout << "nieve divide and conqure :" << endl;
-    pro = multiply_polynomeal_nieve_d_and_q(x, y);
-    print_polynomeal(pro);
+    pro = multiply_polynomial_nieve_d_and_q(x, y);
+    print_polynomial(pro);
     cout << endl;
  
     cout << "fast divide and conqure :" << endl;
-    pro = multiply_polynomeal_fast_d_and_q(x, y);
-    print_polynomeal(pro);
+    pro = multiply_polynomial_fast_d_and_q(x, y);
+    print_polynomial(pro);
     cout << endl;
  
     return 0;
@@ -5590,7 +5693,10 @@ int distinct_substring(string s) {
 //************************************************************************
 
 
-******************************* Hashing **********************************
+*********************************** Hashing **************************************
+
+
+// my raw template **********************************
 
 // 7 digit prime
 1011001 3109081 4136537 4612717 8288213 6346973 2111309 3907529 2244163 3007241 5992073
@@ -5704,7 +5810,225 @@ inline int occerance(const string &word, const string &text, const ll &b, const 
     return cnt;
 }
 
-********************* Z - Algorithm ***************************
+
+// template edited by tanima ***********************************
+
+/***
+ * 
+ * String hashing with double hash
+ * Get the forward and reverse hash of any substring
+ * Complexity - O(n) to build and O(1) for substring hash query
+ * Calculating Hash in 1 based but the ind,l,r are 0 based
+ * You can not pass C++ std::string as the argument in the StringHash function, you must pass array of character
+ *
+***/
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int PRIMES[] = {2147462393, 2147462419, 2147462587, 2147462633, 2147462747, 2147463167, 2147463203, 2147463569, 2147463727, 2147463863, 2147464211, 2147464549, 2147464751, 2147465153, 2147465563, 2147465599, 2147465743, 2147465953, 2147466457, 2147466463, 2147466521, 2147466721, 2147467009, 2147467057, 2147467067, 2147467261, 2147467379, 2147467463, 2147467669, 2147467747, 2147468003, 2147468317, 2147468591, 2147468651, 2147468779, 2147468801, 2147469017, 2147469041, 2147469173, 2147469229, 2147469593, 2147469881, 2147469983, 2147470027, 2147470081, 2147470177, 2147470673, 2147470823, 2147471057, 2147471327, 2147471581, 2147472137, 2147472161, 2147472689, 2147472697, 2147472863, 2147473151, 2147473369, 2147473733, 2147473891, 2147473963, 2147474279, 2147474921, 2147474929, 2147475107, 2147475221, 2147475347, 2147475397, 2147475971, 2147476739, 2147476769, 2147476789, 2147476927, 2147477063, 2147477107, 2147477249, 2147477807, 2147477933, 2147478017, 2147478521, 2147478563, 2147478649, 2147479447, 2147479589, 2147480707, 2147480837, 2147480927, 2147480971, 2147481263, 2147481311, 2147481337, 2147481367, 2147481997, 2147482021, 2147482063, 2147482081, 2147482343, 2147482591, 2147483069, 2147483123};
+long long basemod[5];
+
+/// use init only once at the start of the code in the main function before declaring the hash (you can use init at start of multiple test case but do not use init more than once for each test case)
+
+void init(){
+    unsigned int seed = chrono::system_clock::now().time_since_epoch().count();
+    
+    /// to avoid getting hacked in CF, comment this line for easier debugging
+    srand(seed);  
+
+    int q_len = (sizeof(PRIMES) / sizeof(PRIMES[0])) / 4;
+    basemod[0] = PRIMES[rand() % q_len];
+    basemod[1]  = PRIMES[rand() % q_len + q_len];
+    basemod[2] = PRIMES[rand() % q_len + 2 * q_len];
+    basemod[3]  = PRIMES[rand() % q_len + 3 * q_len];
+}
+struct SingleHash{
+    long long base, mod;
+    int len;
+    vector <int> basepow, f_hash, r_hash;
+
+    SingleHash() {}
+    SingleHash(const char* str, long long base, long long mod): base(base), mod(mod){
+        len = strlen(str);
+        basepow.resize(len + 3, 1), f_hash.resize(len + 3, 0), r_hash.resize(len + 3, 0);
+
+        for (int i = 1; i <= len; i++){
+            basepow[i] = basepow[i - 1] * base % mod;
+            f_hash[i] = (f_hash[i - 1] * base + str[i - 1] + 1007) % mod;
+        }
+
+        for (int i = len; i >= 1; i--){
+            r_hash[i] = (r_hash[i + 1] * base + str[i - 1] + 1007) % mod;
+        }
+    }
+
+    inline int forward_hash(int l, int r){
+        int h = f_hash[r + 1] - ((long long)basepow[r - l + 1] * f_hash[l] % mod);
+        return h < 0 ? h + mod : h;
+    }
+
+    inline int reverse_hash(int l, int r){
+        int h = r_hash[l + 1] - ((long long)basepow[r - l + 1] * r_hash[r + 2] % mod);
+        return h < 0 ? h + mod : h;
+    }
+    inline int insert_update(int ind, char c){ //This won’t change the value in hashing template. It will just give the modified value for a single query
+        long long l = ((f_hash[ind]*base)%mod+(c+1007))%mod;
+        long long r = forward_hash(ind,len-1);
+        return ((l*basepow[len-ind])%mod+r)%mod;
+    }
+    inline int erase_update(int ind){//This won’t change the value in hashing template. It will just give the modified value for a single query
+        long long l=f_hash[ind];
+        long long r=(ind+1<len)? forward_hash(ind+1,len-1):0LL;
+        return ((l*basepow[len-ind-1])%mod+r)%mod;
+    }
+    inline int replace_update(int ind, char c){//This won’t change the value in hashing template. It will just give the modified value for a single query
+        long long l = ((f_hash[ind]*base)%mod+(c+1007))%mod;
+        if(ind+1<len) l=(l*basepow[len-ind-1])%mod;
+        long long r = (ind+1<len)? forward_hash(ind+1,len-1):0LL;
+        return (l+r)%mod;
+    }
+};
+
+struct StringHash{
+    SingleHash sh1, sh2;
+    StringHash() {}
+    StringHash(const char* str){
+        int base_1 = basemod[0];
+        int mod_1  = basemod[1];
+        int base_2 = basemod[2];
+        int mod_2  = basemod[3];
+
+        sh1 = SingleHash(str, base_1, mod_1);
+        sh2 = SingleHash(str, base_2, mod_2);
+    }
+
+    /// returns the hash of the substring from indices l to r (inclusive)
+    long long forward_hash(int l, int r){
+        return ((long long)sh1.forward_hash(l, r) << 32) ^ sh2.forward_hash(l, r);
+    }
+
+    /// returns the hash of the reversed substring from indices l to r (inclusive)
+    long long reverse_hash(int l, int r){
+        return ((long long)sh1.reverse_hash(l, r) << 32) ^ sh2.reverse_hash(l, r);
+    }
+    long long insert_update(int ind,char c){
+        return ((long long)sh1.insert_update(ind, c) << 32) ^ sh2.insert_update(ind, c);
+    }
+    long long erase_update(int ind){
+        return ((long long)sh1.erase_update(ind) << 32) ^ sh2.erase_update(ind);
+    }
+    long long replace_update(int ind,char c){
+        return ((long long)sh1.replace_update(ind, c) << 32) ^ sh2.replace_update(ind, c);
+
+    }
+    bool isPalin(int l, int r){ return (forward_hash(l,r)==reverse_hash(l,r));}
+};
+
+int main(){
+    init();
+    auto hasher = StringHash("abca");
+    auto hasher1 = StringHash("acba");
+    if(hasher.isPalin(0,3)) cout<<"String is palindrome"<<endl;
+
+    if(hasher.forward_hash(0,3)!=hasher1.forward_hash(0,3))
+        cout<<"Doesn't match"<<endl;
+
+    if(hasher.replace_update(2,'b')==hasher1.replace_update(1,'b'))
+        cout<<"Matches"<<endl;
+
+    if(hasher.forward_hash(0,3)!=hasher1.forward_hash(0,3))
+        cout<<"Doesn't match"<<endl;
+
+    if(hasher.erase_update(2)==hasher1.erase_update(1))
+        cout<<"Matches"<<endl;
+
+    if(hasher.forward_hash(0,3)!=hasher1.forward_hash(0,3))
+        cout<<"Doesn't match"<<endl;
+
+    if(hasher.insert_update(3,'b')==hasher1.insert_update(1,'b'))
+        cout<<"Matches"<<endl;
+    return 0;
+}
+
+
+
+// template edited by me ***********************************
+// Hashing template ------------------------------------------------------------------------
+
+int base_1, base_2, mod_1, mod_2;
+void init_hash() {
+    const vi h_primes = {2147462393, 2147462419, 2147462587, 2147462633, 2147462747, 2147463167, 2147463203, 2147463569, 2147463727, 2147463863, 2147464211, 2147464549, 2147464751, 2147465153, 2147465563, 2147465599, 2147465743, 2147465953, 2147466457, 2147466463, 2147466521, 2147466721, 2147467009, 2147467057, 2147467067, 2147467261, 2147467379, 2147467463, 2147467669, 2147467747, 2147468003, 2147468317, 2147468591, 2147468651, 2147468779, 2147468801, 2147469017, 2147469041, 2147469173, 2147469229, 2147469593, 2147469881, 2147469983, 2147470027, 2147470081, 2147470177, 2147470673, 2147470823, 2147471057, 2147471327, 2147471581, 2147472137, 2147472161, 2147472689, 2147472697, 2147472863, 2147473151, 2147473369, 2147473733, 2147473891, 2147473963, 2147474279, 2147474921, 2147474929, 2147475107, 2147475221, 2147475347, 2147475397, 2147475971, 2147476739, 2147476769, 2147476789, 2147476927, 2147477063, 2147477107, 2147477249, 2147477807, 2147477933, 2147478017, 2147478521, 2147478563, 2147478649, 2147479447, 2147479589, 2147480707, 2147480837, 2147480927, 2147480971, 2147481263, 2147481311, 2147481337, 2147481367, 2147481997, 2147482021, 2147482063, 2147482081, 2147482343, 2147482591, 2147483069, 2147483123};
+        
+    // taking reandom prime as base and mod with seeding
+    unsigned int seed = chrono::system_clock::now().time_since_epoch().count();
+    srand(seed);  
+
+    int q_len = (h_primes.size() / 4);
+
+    base_1 = h_primes[rand() % q_len];
+    mod_1  = h_primes[rand() % q_len + q_len];
+    
+    base_2 = h_primes[rand() % q_len + 2 * q_len];
+    mod_2  = h_primes[rand() % q_len + 3 * q_len];
+}
+
+struct SingleHash{
+    long long base, mod;
+    vector <int> basepow, f_hash, r_hash;
+
+    SingleHash() {}
+    SingleHash(const string &str, long long base, long long mod): base(base), mod(mod){
+        int len = str.size();
+        basepow.resize(len + 3, 1), f_hash.resize(len + 3, 0), r_hash.resize(len + 3, 0);
+
+        for (int i = 1; i <= len; i++){
+            basepow[i] = basepow[i - 1] * base % mod;
+            f_hash[i] = (f_hash[i - 1] * base + str[i - 1] + 1007) % mod;
+        }
+
+        for (int i = len; i >= 1; i--){
+            r_hash[i] = (r_hash[i + 1] * base + str[i - 1] + 1007) % mod;
+        }
+    }
+
+    inline int forward_hash(int l, int r){
+        int h = f_hash[r + 1] - ((long long)basepow[r - l + 1] * f_hash[l] % mod);
+        return h < 0 ? h + mod : h;
+    }
+
+    inline int reverse_hash(int l, int r){;
+        int h = r_hash[l + 1] - ((long long)basepow[r - l + 1] * r_hash[r + 2] % mod);
+        return h < 0 ? h + mod : h;
+    }
+};
+
+struct StringHash{
+    SingleHash sh1, sh2;
+
+    StringHash(const string &str){
+
+        sh1 = SingleHash(str, base_1, mod_1);
+        sh2 = SingleHash(str, base_2, mod_2);
+    }
+
+    /// returns the hash of the forward substring from indices l to r (inclusive)
+    long long forward_hash(int l, int r){
+        return ((long long)sh1.forward_hash(l, r) << 32) ^ sh2.forward_hash(l, r);
+    }
+
+    /// returns the hash of the reversed substring from indices l to r (inclusive)
+    long long reverse_hash(int l, int r){
+        return ((long long)sh1.reverse_hash(l, r) << 32) ^ sh2.reverse_hash(l, r);
+    }
+
+    bool isPalin(int l, int r){ return (forward_hash(l,r)==reverse_hash(l,r));}
+};
+// ---------------------------------------------------------------------------------------
+
+
+
+***************************** Z - Algorithm ********************************
 
 vi z_array(string s) {
     int n = s.size();
@@ -5759,7 +6083,120 @@ vi z_array(string s) {
 }
 
 
-// -----------------------------------------------------------------------------------
+***************************** unordered map ********************************
+
+unordered_map is a data structure like map but it is more than 4 times faster than map.
+you can use it in C++11 with including 
+#include<unordered_map>
+
+e.g.
+//--------------------------------------------------
+#include<unordered_map>
+using namespace std;
+int main(){
+  unordered_map<int,int>mp;
+  mp[5]=12;
+  mp[4]=14;
+  cout<<mp[5]<<' '<<mp[4]<<endl;//prints: 12 14
+}
+//--------------------------------------------------
+
+for custom data type we have to change the HASH function for unordered map.
+e.g.
+
+//--------------------------------------------------
+struct HASH{
+  size_t operator()(const pair<int,int>&x)const{
+    return hash<long long>()(((long long)x.first)^(((long long)x.second)<<32));
+  }
+};
+
+unordered_map<pair<int,int>,int,HASH>mp;
+//--------------------------------------------------
+
+
+
+***************************** Ordered Set / PBDS ********************************
+
+#include <ext/pb_ds/tree_policy.hpp>
+#include <ext/pb_ds/assoc_container.hpp>
+
+using namespace __gnu_pbds;
+
+
+template <typename T>   
+    using ordered_set = tree<T, null_type, less<T>, 
+        rb_tree_tag, tree_order_statistics_node_update>;
+// if you want the element to be ordered greatest > to > lowest "instead of" lowest < to < greatest
+// use greater<T> "instead of" less<T>
+template <typename T>   
+    using ordered_set = tree<T, null_type, greater<T>, 
+        rb_tree_tag, tree_order_statistics_node_update>;
+
+
+int main() {
+
+    ordered_set<int> ost;
+
+    ost.insert(2);
+    ost.insert(5);
+    ost.insert(1);
+    ost.insert(9);
+    ost.insert(6);
+    ost.insert(5);
+
+    // ost.find_by_order(k)
+    // return the pointer of the k'th index
+    debug(*ost.find_by_order(0));
+    debug(*ost.find_by_order(1));
+    debug(*ost.find_by_order(2));
+    debug(*ost.find_by_order(3));
+    debug(*ost.find_by_order(4));
+
+    // ost.order_of_key(x)
+    // return the index of the value x
+    debug(ost.order_of_key(9));
+    debug(ost.order_of_key(6));
+    debug(ost.order_of_key(5));
+    debug(ost.order_of_key(2));
+    debug(ost.order_of_key(1));
+}
+
+
+***************************** Manachers algorithm ********************************
+
+/***
+ *
+ * Manacher's algorithm to generate longest palindromic substrings for all centers
+ * For a string of length n, returns a vector pal, of size 2 * n - 1
+ * When i is even, pal[i] = largest palindromic substring centered from str[i / 2]
+ * When i is odd,  pal[i] = largest palindromic substring centered between str[i / 2] and str[i / 2] + 1
+ *
+***/
+
+vector <int> manacher(const string& str){
+    int i, j, k, l = str.size(), n = l << 1;
+    vector <int> pal(n);
+
+    for (i = 0, j = 0, k = 0; i < n; j = max(0, j - k), i += k){
+        while (j <= i && (i + j + 1) < n && str[(i - j) >> 1] == str[(i + j + 1) >> 1]) j++;
+        for (k = 1, pal[i] = j; k <= i && k <= pal[i] && (pal[i] - k) != pal[i - k]; k++){
+            pal[i + k] = min(pal[i - k], pal[i] - k);
+        }
+    }
+
+    pal.pop_back();
+    return pal;
+}
+
+int main(){
+    assert(manacher("abababbaa") == vector<int>({1, 0, 3, 0, 5, 0, 5, 0, 3, 0, 1, 4, 1, 0, 1, 2, 1}));
+    return 0;
+}
+
+// ------------------------------------------------------------------------------------------
+
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
