@@ -3,9 +3,9 @@
 
 For each test case we are given a Text and a Pattern, we have to output the sum of total occerance of all possible concatenation of the proper Prefix and Suffix of the Pattern.
 
-Proper prefixes of "ACTA" are {"A", "AC", "ACT"} and proper suffixes are {"A", "TA", "CTA"}. 
-All possible concatination of proper prefix and suffix are {"AA", "ATA", "ACTA", "ACA", "ACTA", "ACCTA", "ACTA", "ACTTA", "ACTCTA"}.
-We have to output the sum of the total occerance of each string from this multiset.
+Proper prefixes of "ACTA" are {"A", "AC", "ACT"} and proper suffixes are {"A", "TA", "CTA"}.\n
+All possible concatination of proper prefix and suffix are {"AA", "ATA", "ACTA", "ACA", "ACTA", "ACCTA", "ACTA", "ACTTA", "ACTCTA"}.\n
+We have to output the sum of the total occerance of each string from this multiset.\n
 
 
 ![Graph](1107.png)
