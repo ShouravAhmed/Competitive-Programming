@@ -1,9 +1,10 @@
 # LOJ 1334 - Genes in DNA #
 ---
 
-For each test case you are given a Pattern and a Text we have to output the total number of occerance of the substring *S*.
+For each test case we are given a Text and a Pattern, we have to output the sum of total occerance of all possible concatenation of the proper Prefix and Suffix of the Pattern.
 
-For each case you have to print the case number in a line first. Then for each cow, you have to print `Yes` or `No` depending whether the cow is inside the land or not.
+Proper prefixes of "ACTA" are {"A", "AC", "ACT"} and proper suffixes are {"A", "TA", "CTA"}, here all possible concatination of proper prefix and suffix are {"AA", "ATA", "ACTA", "ACA", "ACTA", "ACCTA", "ACTA", "ACTTA", "ACTCTA"} We have to output the sum of the total occerance of each string from this multiset.
+
 
 ![Graph](1107.png)
 
