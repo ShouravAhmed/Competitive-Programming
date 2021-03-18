@@ -1,9 +1,7 @@
-# LOJ 1107 - How Cow #
+# LOJ 1334 - Genes in DNA #
 ---
 
-Input starts with an integer *T* (≤ 50), denoting the number of test cases.
-
-The first line of each case contains four integers *x1* *y1* *x2* *y2*, where `(x1, y1)` is the lower left coordinate of his land and `(x2, y2)` is the upper right coordinate of his land. You can assume that the sides of the land are axis parallel. The next line contains an integer `M (1 ≤ M ≤ 100)` denoting the number of cows. Each of the next *M* lines contains two integers each denoting *x* *y* - the position of a cow. You can safely assume that no cow will lie on the boundary of the rectangle. All the coordinates will lie in the range `[0, 10000]`.
+For each test case you are given a Pattern and a Text we have to output the total number of occerance of the substring *S*.
 
 For each case you have to print the case number in a line first. Then for each cow, you have to print `Yes` or `No` depending whether the cow is inside the land or not.
 
